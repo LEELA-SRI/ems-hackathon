@@ -1,73 +1,92 @@
-from flask import Flask,render_template,request,redirect,flash,url_for, make_response  
-from pymongo import MongoClient
-
-from gridfs import GridFS  
-
-
-import matplotlib.pyplot as plt
-
-import pymongo as mongo
+from flask import Flask,render_template,request,flash,session,redirect,url_for
+from flask_pymongo import PyMongo
+from hashlib import sha256
+# from gridfs import GridFS  
+import pymongo 
+from werkzeug.utils import secure_filename
+import os
 app = Flask(__name__)
+
 app.config['SECRET_KEY']="oohlala"
-url=f'mongodb+srv://trailUsername:trialPassword@trailcluster.dhfoi.mongodb.net/test'
-client = mongo.MongoClient(url)
-db = client["avalanche"]
-grid_fs = GridFS(db)
-events_db=db["events"]
+app.config['UPLOAD_FOLDER']='static/images/uploaded'
+uri=f"mongodb+srv://trailUsername:trialPassword@trailcluster.dhfoi.mongodb.net/test"
+# mongo = PyMongo(app)
+client = pymongo.MongoClient(uri)
+db=client.avalanche
+
+# db=mongo.avalanche
+
+# grid_fs = GridFS(db)
+
+events_db=db.events
 users_db=db.users
+brochures_db=db.brochures
+
+ALLOWED_EXTS=set(['png','jpg','jpeg','webp'])
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTS
+
 
 # events_db.insert_one(
 #                 {
 #                     "poster": 'static/images/brochure.jpeg',
-#                     "name": 'test4',
+#                     "name": 'test5',
 #                     "datetime": '28/03/2023 13:00',
 #                     "venue": 'lecture hall 233'
 #                 }
 #             )
 
-# users_db.insert_one(
-#                 {
-#                     "email": 'walala@gmail.com',
-#                     "password": 'test4',
-                    
-#                 }
-#             )
 
-@app.route('/',methods=['GET','POST'])
+@app.route('/home',methods=['GET','POST'])
 def events():
-   
-    event=events_db.find()
-    return render_template('events.html',event=event)
+    print(bool(session.items()))
+    if session.items() and session['email']:
+        var=True
+    else:
+        var=False
+    if request.method=='POST':
+        if 'uploaded_file' not in request.files:
+            flash("No file is uploaded")
+        brochure=request.files['uploaded_file']
+        if brochure.filename=='':
+            flash("No img selected")
+        if brochure and allowed_file(brochure.filename):
+            # save_brochure=secure_filename(brochure.filename)
+            brochure.save(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'],secure_filename(brochure.filename)))
+            brochures_db.insert_one(
+                {
+                'uploaded_brochure': f'static/images/uploaded/{secure_filename(brochure.filename)}'
+                }
+            )
+            events_db.insert_one(
+                {
+                'poster': f'static/images/uploaded/{secure_filename(brochure.filename)}'
+                }
+            )
 
-# @app.route('/addevent')
-# def addevent():
-#     return render_template('addevent.html')
+    event=events_db.find()
+    return render_template('events.html',event=event,var=var)
+
 
 @app.route('/userlogin',methods=["GET","POST"])
 def userlogin():
-    if request.method=="POST":
+    if request.method=='POST':
         email = request.form.get("email")
         password = request.form.get("password")
         user=users_db.find_one(
             {'email':email}
             )
-        if user !=None :
-            if user['password']==password:
-                var=True
-                event=events_db.find()
-                return render_template('events.html',event=event,var=var)
+        if user:
+            if sha256(str(password).encode()).hexdigest()==user['password']:
+                session['email'] = email
+                event=db.events.find()
+                return redirect(url_for('events'))
             else:
-                var=False
                 flash("Incorrect Password")
         else:
-            var=False
             flash("user doesnt Exist")
-        
-       
-
-        # return render_template('userlogin.html',email=email,password=password)
-  
     return render_template('userlogin.html')
+
 
 @app.route('/registerUser',methods=['GET','POST'])
 def userregister():
@@ -80,13 +99,9 @@ def userregister():
                 )
         if user==None:
             if password==cpassword:
-                users_db.insert_one(
-                        {
-                            "email": email,
-                            "password": password,
-                            
-                        }
-                    )
+                hashpass = sha256(str(password).encode()).hexdigest()
+                users_db.insert_one({'email' : email, 'password' : hashpass})
+                session['email'] = email
                 return render_template('userlogin.html')
             else:
                 flash('passwords donot match')
@@ -94,7 +109,14 @@ def userregister():
             flash('Mail-id already exists')
     return render_template('userregister.html')
 
-
+@app.route("/logout", methods=["POST", "GET"])
+def logout():
+    if "email" in session:
+        session.pop("email", None)
+        return redirect('/home')
+    else:
+        return redirect('/home')
+    
 @app.route('/categories')
 def categories():
     return render_template('categories.html')

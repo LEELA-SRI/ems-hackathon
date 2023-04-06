@@ -1,4 +1,5 @@
 {% extends 'base.html' %} 
+
 {% block content %}
 <div class="container mb-3">
    
@@ -7,12 +8,15 @@
 </div>
 
 {% if var %}
+<form action="{{ url_for('events')}}" method="post" enctype="multipart/form-data">
 <div class="input-group mb-3">
   
   <div class="custom-file">
-    <input type="file" class="custom-file-input" id="inputGroupFile01">
+    <input type="file" name="uploaded_file" class="form-control" id="uploaded_file">
   </div>
+  <button class="btn btn-primary" type="submit">Submit</button>
 </div>
+</form>
 {% endif %}
 
 <div class="container mb-3">
