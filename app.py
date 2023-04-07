@@ -1,22 +1,25 @@
 from flask import Flask,render_template,request,flash,session,redirect,url_for
-from flask_pymongo import PyMongo
 from hashlib import sha256
-# from gridfs import GridFS  
 import pymongo 
 from werkzeug.utils import secure_filename
+from PIL import Image
+from pytesseract import pytesseract
+import re
 import os
+
+
 app = Flask(__name__)
 
 app.config['SECRET_KEY']="oohlala"
 app.config['UPLOAD_FOLDER']='static/images/uploaded'
 uri=f"mongodb+srv://trailUsername:trialPassword@trailcluster.dhfoi.mongodb.net/test"
-# mongo = PyMongo(app)
+
+
 client = pymongo.MongoClient(uri)
+
+
 db=client.avalanche
 
-# db=mongo.avalanche
-
-# grid_fs = GridFS(db)
 
 events_db=db.events
 users_db=db.users
@@ -26,15 +29,23 @@ ALLOWED_EXTS=set(['png','jpg','jpeg','webp'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTS
 
+def image_to_text(path_im):
+    path_to_tesseract = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
+    image_path = path_im
+    pytesseract.tesseract_cmd = path_to_tesseract
+    img = Image.open(image_path )
+    text = pytesseract.image_to_string(img)
+    ocr_text=text.lower().capitalize()
+    venue_pattern = r'\b(?:[A-Z][a-z]*\s)*[A-Z][a-z]*\s(?:[A-Z][a-z]*\s)*\b(?:Auditorium|Classroom|Hotel|Floor|Venue)\b'
+    venues = re.findall(venue_pattern, ocr_text)
 
-# events_db.insert_one(
-#                 {
-#                     "poster": 'static/images/brochure.jpeg',
-#                     "name": 'test5',
-#                     "datetime": '28/03/2023 13:00',
-#                     "venue": 'lecture hall 233'
-#                 }
-#             )
+    date_pattern = r"(\d{1,2})\s(January|February|March|April|May|June|July|August|September|October|November|December|JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{4})"
+    dates = re.findall(date_pattern, ocr_text)
+
+    time_pattern = r'\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b'
+    times = re.findall(time_pattern, ocr_text)
+
+    return venues,dates,times
 
 
 @app.route('/home',methods=['GET','POST'])
@@ -51,16 +62,22 @@ def events():
         if brochure.filename=='':
             flash("No img selected")
         if brochure and allowed_file(brochure.filename):
-            # save_brochure=secure_filename(brochure.filename)
             brochure.save(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'],secure_filename(brochure.filename)))
             brochures_db.insert_one(
                 {
                 'uploaded_brochure': f'static/images/uploaded/{secure_filename(brochure.filename)}'
                 }
             )
+            venue_event=image_to_text(f'static/images/uploaded/{secure_filename(brochure.filename)}')[0]
+            date_event=image_to_text(f'static/images/uploaded/{secure_filename(brochure.filename)}')[1]
+            time_event=image_to_text(f'static/images/uploaded/{secure_filename(brochure.filename)}')[2]
             events_db.insert_one(
                 {
-                'poster': f'static/images/uploaded/{secure_filename(brochure.filename)}'
+                'poster': f'static/images/uploaded/{secure_filename(brochure.filename)}',
+                'name':'some new event',
+                'venue':venue_event,
+                'date': date_event ,
+                'time':time_event
                 }
             )
 

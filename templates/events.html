@@ -1,6 +1,7 @@
 {% extends 'base.html' %} 
 
 {% block content %}
+
 <div class="container mb-3">
    
         <h1>Events</h1>
@@ -21,20 +22,46 @@
 
 <div class="container mb-3">
     <div class="row">
-{% for i in event %}
-<div class="card col-lg-3 col-md-4 col-sm-6 col-xs-12">
-    <img src="{{ i['poster']}}" class="card-img-top" alt="...">
-    <div class="card-body">
-    
-      <h5 class="card-title">{{ i['name'] }}</h5>
-      <p class="card-text">{{ i['venue'] }}</p>
-      <p class="card-text">{{ i['datetime'] }}</p>
-      <a href="#" class="btn btn-primary">Learn More</a>
-      <a href="#" class="btn btn-primary admin-visible">Edit</a>
 
+
+   {% for i in event %}
+   <div class="card col-lg-6 ">
+    <div  class="d-flex flex_dir_card card-inner">
+        <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
+        <div>
+            <div class="card-header">
+                <h3>{{ i['name'] }}</h3>
+            </div>
+            <div class="card-body">
+                <p>Event Description</p>
+                <div  class="d-flex flex_dir" style=" gap: 15px;">
+                    <div>
+                        <i class="fa-solid fa-calendar"></i>
+                        {{ i['date'] }}
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-clock"></i>
+                        {{ i['time'] }}
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-location"></i>
+                        {{ i['venue'] }}
+                    </div>
+                </div>
+                <br>
+                <div style="display: flex;">
+                    <button class="button">Learn More</button>
+                    {% if var %}
+        <a href="#" class="btn btn-primary admin-visible">Edit</a>
+        {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  {% endfor %}
+</div>
+ 
+  {% endfor %} 
+
   </div>
 </div>
 
