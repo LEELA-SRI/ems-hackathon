@@ -2,23 +2,34 @@
 
 {% block content %}
 
-<div class="container mb-3">
+<div class="container d-flex align-items-center mb-5">
    
-        <h1>Events</h1>
-      <a href="{{ url_for('userlogin') }}" class="btn btn-primary admin-visible add-event ">Add Event</a>
+        <div class="h1">Events</div>
+        {% if var %}
+      <a href="{{ url_for('addevent') }}" class="btn btn-primary ms-auto add-event ">Add Event</a>
+{% else %}
+      <a href="{{ url_for('userlogin') }}" class="btn btn-primary ms-auto add-event ">Add Event</a>
+      {% endif %}
 </div>
 
-{% if var %}
-<form action="{{ url_for('events')}}" method="post" enctype="multipart/form-data">
-<div class="input-group mb-3">
-  
-  <div class="custom-file">
-    <input type="file" name="uploaded_file" class="form-control" id="uploaded_file">
-  </div>
-  <button class="btn btn-primary" type="submit">Submit</button>
-</div>
-</form>
-{% endif %}
+
+
+
+  <section class=portfolio id=Events>
+    <div class=container data-aos=fade-up>
+      
+      <ul class="d-flex justify-content-center" data-aos=fade-up data-aos-delay=100 id=portfolio-flters>
+        <li data-filter=* class=filter-active>All
+        <li data-filter=.filter-past>Past Events
+        <li data-filter=.filter-ongoing>Ongoing Events
+        <li data-filter=.filter-upcoming>Upcoming Events
+      </ul>
+     
+        
+        
+      </div>
+    </div>
+  </section>
 
 <div class="container mb-3">
     <div class="row">
@@ -30,7 +41,7 @@
         <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
         <div>
             <div class="card-header">
-                <h3>{{ i['name'] }}</h3>
+                <h3 class="text-capitalize">{{ i['name']}}</h3>
             </div>
             <div class="card-body">
                 <p>Event Description</p>
@@ -52,7 +63,7 @@
                 <div style="display: flex;">
                     <button class="button">Learn More</button>
                     {% if var %}
-        <a href="#" class="btn btn-primary admin-visible">Edit</a>
+        <a href="#" class="btn btn-primary edit">Edit</a>
         {% endif %}
                 </div>
             </div>

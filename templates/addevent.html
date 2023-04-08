@@ -1,0 +1,52 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-3">
+  <form
+    action="{{ url_for('addevent')}}"
+    method="post"
+    enctype="multipart/form-data"
+  >
+    <div class="input-group mb-3 justify-content-center">
+      <div class="custom-file">
+        <input
+          type="file"
+          name="uploaded_file"
+          class="form-control"
+          id="uploaded_file"
+        />
+      </div>
+      <button class="btn btn-primary" type="submit">Submit</button>
+    </div> 
+  </form>
+</div>
+{% if show %}
+<div class="container-lg mt-5">
+    <form action="{{ url_for('upload')}}"
+    method="post">
+    <div class="row">
+      <div class="col-12 col-md-6 mb-3 mb-md-0 ">
+        <img src="{{ poster }}" style="width:-webkit-fill-available">
+      </div>
+      <div class="col-12 col-md-6">
+            <div class="mb-3">
+              <label for="" class="form-label">Name of the Event</label>
+              <input type="text" name="event_name" class="form-control" id="" aria-describedby="" value="{{ name }} " required>
+            </div>
+            <div class="mb-3">
+              <label for="" class="form-label">Date : </label>
+              <input type="date" class="form-control" id="" name="event_date" value="{{ date }}" placeholder="{{date}}" required>
+            </div>
+            <div class="mb-3">
+                <label for="" class="form-label">Time : </label>
+                <input type="time" class="form-control" id="" value="{{ time }}" name="event_time" required>
+            </div>
+            <div class="mb-3">
+                <label for="" class="form-label">Venue : </label>
+                <input type="text" class="form-control" id="" value="{{ venue }}" name="event_venue" required>
+              </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+     
+    </div>
+{% endif %}
+{% endblock %}

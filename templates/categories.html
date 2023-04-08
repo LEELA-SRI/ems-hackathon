@@ -1,4 +1,13 @@
 {% extends 'base.html' %} 
 {% block content %}
-cat
+
+{% for i in broc %}
+<div class="card col-lg-6 ">
+ <div  class="d-flex flex_dir_card card-inner">
+     <img src="{{ i['uploaded_brochure']}}" alt="Event Image" class="event-poster">
+     
+ </div>
+</div>
+
+{% endfor %} 
 {% endblock %}

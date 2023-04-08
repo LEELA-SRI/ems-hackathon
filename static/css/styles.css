@@ -23,13 +23,18 @@ body {
     background: none;
     border: none;
     padding: 6px;
-    background-color: rgba(164, 59, 146, 0.3);
-    color: aliceblue;
+    border: 1px solid green;
+    color: green;
     font-weight: bold;
     backdrop-filter: blur(5px);
     margin-right: 10px;
     border-radius: 5px;
 
+}
+.edit{
+    background: none;
+    color:red;
+    border:1px solid red
 }
 .event-poster{
     width:40%;
@@ -38,10 +43,41 @@ body {
     margin-right: 20px;
     margin-bottom: 0;
 }
-
+.add-event{
+    background: #47b2e4;
+    color: #fff;
+}
+.add-event:hover{
+    color: #47b2e4;
+    background: #fff;
+    border:1px solid #47b2e4
+}
 .flex_dir{
     flex-direction: column;
 }
+
+.portfolio #portfolio-flters {
+    list-style: none;
+    margin-bottom: 20px;
+  }
+  .portfolio #portfolio-flters li {
+    cursor: pointer;
+    display: inline-block;
+    margin: 10px 5px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    color: #444444;
+    transition: all 0.3s;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-family: "Poppins", sans-serif;
+  }
+  .portfolio #portfolio-flters li:hover, .portfolio #portfolio-flters li.filter-active {
+    background: #47b2e4;
+    color: #fff;
+  }
+
 @media (min-width:320px) and (max-width:500px){
     .event-poster{
         width:auto;
