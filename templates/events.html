@@ -4,7 +4,7 @@
 
 <div class="container d-flex align-items-center mb-5">
    
-        <div class="h1">Events</div>
+        <div class="h3">Browse Events</div>
         {% if var %}
       <a href="{{ url_for('addevent') }}" class="btn btn-primary ms-auto add-event ">Add Event</a>
 {% else %}
@@ -12,31 +12,97 @@
       {% endif %}
 </div>
 
-
-
-
   <section class=portfolio id=Events>
-    <div class=container data-aos=fade-up>
-      
-      <ul class="d-flex justify-content-center" data-aos=fade-up data-aos-delay=100 id=portfolio-flters>
-        <li data-filter=* class=filter-active>All
-        <li data-filter=.filter-past>Past Events
-        <li data-filter=.filter-ongoing>Ongoing Events
-        <li data-filter=.filter-upcoming>Upcoming Events
-      </ul>
-     
-        
-        
+    <div class=container>
+      <ul class="d-flex justify-content-center" id=portfolio-flters>
+        <li class="filter-all-btn filter-active" >All
+        <li class="filter-past-btn">Past Events
+        <li class="filter-ongoing-btn">Ongoing Events
+        <li class="filter-upcoming-btn">Upcoming Events
+      </ul> 
       </div>
     </div>
   </section>
+
 
 <div class="container mb-3">
     <div class="row">
 
 
    {% for i in event %}
-   <div class="card col-lg-6 ">
+    {% if i['date'] > today_date %}
+    <div class="col-12 item  col-md-6 col-lg-4 col-xl-3 filter-upcoming">
+    {% elif i['date'] == today_date%}
+    <div class="col-12  item  col-md-6 col-lg-4 col-xl-3 filter-ongoing">
+    {% elif today_date > i['date']  %}
+    <div class="col-12 item  col-md-6 col-lg-4 col-xl-3 filter-past">
+    {% endif %}
+
+
+    <div  class="card card-inner">
+        <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
+        <div>
+            <div class="card-header">
+                <h3 class="text-capitalize">{{ i['name']}}</h3>
+            </div>
+            <div class="card-body">
+                <p>Event Description</p>
+                <div  class="d-flex flex-column" style=" gap: 10px;">
+                    <div>
+                        <i class="fa-solid fa-calendar"></i>
+                        {{ i['date'] }}
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-clock"></i>
+                        {{ i['time'] }}
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-location"></i>
+                        {{ i['venue'] }}
+                    </div>
+                </div>
+                <br>
+                <div style="display: flex;">
+                    <button class="button">Learn More</button>
+                    {% if var %}
+        <a href="#" class="btn btn-primary edit">Edit</a>
+        {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+  {% endfor %} 
+
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <div class="container mb-3">
+    <div class="row">
+
+
+   {% for i in event %}
+   {% if i['date'] > today_date %}
+   <div class="card col-lg-6 filter-upcoming">
+    {% elif i['date']== today_date%}
+    <div class="card col-lg-6 filter-ongoing">
+    {% elif i['date'] < today_date %}
+    <div class="card col-lg-6 filter-past">
+      {% endif %}
+
+
     <div  class="d-flex flex_dir_card card-inner">
         <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
         <div>
@@ -74,6 +140,8 @@
   {% endfor %} 
 
   </div>
-</div>
+</div> -->
+
+
 
 {% endblock %}
