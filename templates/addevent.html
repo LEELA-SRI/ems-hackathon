@@ -1,52 +1,95 @@
 {% extends 'base.html' %} {% block content %}
 <div class="container my-3">
-  <form
-    action="{{ url_for('addevent')}}"
-    method="post"
-    enctype="multipart/form-data"
-  >
+  <form action="{{ url_for('addevent')}}" method="post" enctype="multipart/form-data">
     <div class="input-group mb-3 justify-content-center">
       <div class="custom-file">
-        <input
-          type="file"
-          name="uploaded_file"
-          class="form-control"
-          id="uploaded_file"
-        />
+        <input type="file" name="uploaded_file" class="form-control" id="uploaded_file" />
       </div>
       <button class="btn btn-primary" type="submit">Submit</button>
-    </div> 
+    </div>
   </form>
 </div>
 {% if show %}
-<div class="container-lg mt-5">
-    <form action="{{ url_for('upload')}}"
-    method="post">
+<div class="container-lg my-5">
+  <form action="{{ url_for('upload')}}" method="POST">
     <div class="row">
       <div class="col-12 col-md-6 mb-3 mb-md-0 ">
         <img src="{{ poster }}" style="width:-webkit-fill-available">
       </div>
       <div class="col-12 col-md-6">
-            <div class="mb-3">
-              <label for="" class="form-label">Name of the Event</label>
-              <input type="text" name="event_name" class="form-control" id="" aria-describedby="" value="{{ name }} " required>
-            </div>
-            <div class="mb-3">
-              <label for="" class="form-label">Date : </label>
-              <input type="date" class="form-control" id="" name="event_date" value="{{ date }}" placeholder="{{date}}" required>
-            </div>
-            <div class="mb-3">
-                <label for="" class="form-label">Time : </label>
-                <input type="time" class="form-control" id="" value="{{ time }}" name="event_time" required>
-            </div>
-            <div class="mb-3">
-                <label for="" class="form-label">Venue : </label>
-                <input type="text" class="form-control" id="" value="{{ venue }}" name="event_venue" required>
-              </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="mb-3">
+          <label for="" class=" form-label req">Name of the Event</label>
+          <input type="text" name="event_name" class="form-control" id="" aria-describedby="" value="{{ name }} "
+            required>
         </div>
-    </form>
-     
-    </div>
+        <div class="mb-3">
+          <label for="" class=" form-label">Event Description   </label>
+          <textarea type="text" class="form-control" id="" value="" name="event_desc" placeholder="Give a breif desciption of the event"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label">Eligibility  criteria   </label>
+          <textarea type="text" class="form-control" id="" value="" name="event_eligibility" placeholder="Leave empty if None" ></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label">Prize / Certificates </label>
+          <input type="text" class="form-control" id="" value="" name="event_awards" placeholder="Ex: 1st prize - 1000/- , E-certificates">
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label req">Date   </label>
+          <input type="date" class="form-control" id="" name="event_date" value="{{ date }}" placeholder="{{date}}"
+            required>
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label req">Time   </label>
+          <input type="time" class="form-control" id="" value="{{ time }}" name="event_time" required>
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label req">Venue   </label>
+          <input type="text" class="form-control" id="" value="{{ venue }}" name="event_venue" required>
+        </div>
+        
+        
+        <div class="mb-3">
+          <label for="" class=" form-label ">Registration Deadline   </label>
+          <input type="date" class="form-control" id="" value="" name="event_deadline">
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label req">Registration Limit   </label>
+          <input type="number" class="form-control" id="" value="" name="event_limit" required>
+        </div>
+        <div class="mb-3">
+          <label for="" class=" form-label req">Contact Number  </label>
+          <input type="text" class="form-control" id="" value="" name="event_cord" required>
+        </div>
+        <div class="mb-3">
+          <label for="selectDropdown" class=" form-label req">Department</label>
+          <select class="selectpicker form-control" id="selectDropdown" data-live-search="true" name="dept" required>
+          <option value="">Choose an option</option>
+
+          <option value="School of Computing">School of Computing</option>
+          <option value="School of Electrical and Electronics">School of Electrical and Electronics</option>
+          <option value="School of Mechanical">School of Mechanical</option>
+          <option value="School of Bio and Chemical Engineering">School of Bio and Chemical Engineering</option>
+          <option value="School of Building and Environment">School of Building and Environment</option>
+          <option value="School of Management Studies">School of Management Studies</option>
+          <option value="School of Science & Humanities">School of Science & Humanities</option>
+          <option value="School of Law">School of Law</option>
+          <option value="School of Pharmacy">School of Pharmacy</option>
+          <option value="School of Nursing">School of Nursing</option>
+          <option value="School of Dental Sciences">School of Dental Sciences</option>
+          <option value="others">Others</option>
+
+          </select> 
+        </div>
+        
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+  </form>
+
+</div>
+
+
 {% endif %}
+
 {% endblock %}

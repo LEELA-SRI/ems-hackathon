@@ -1,13 +1,177 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
+
 {% block content %}
 
-<!-- {% for i in broc %}
-<div class="card col-lg-6 ">
- <div  class="d-flex flex_dir_card card-inner">
-     <img src="{{ i['uploaded_brochure']}}" alt="Event Image" class="event-poster">
-     
- </div>
+<style>
+    @media (min-width:501px) and  (max-width:768px){
+    .card-inner {
+        display: flex;
+        flex-direction: row;
+    }
+}
+</style>
+<div class="container-lg my-5">
+    <h1>Event Filters</h1>
+
+    <form action="{{ url_for('categories')}}" method="GET">
+        <div class="mb-3">
+            <label for="departmentFilter" class="form-label">Department</label>
+            <select class="form-control" id="departmentFilter" name="department">
+                <option value>All Departments</option>
+                <option value="School of Computing">School of Computing</option>
+                <option value="School of Electrical and Electronics">School of
+                    Electrical and Electronics</option>
+                <option value="School of Mechanical">School of Mechanical</option>
+                <option value="School of Bio and Chemical Engineering">School of
+                    Bio and Chemical Engineering</option>
+                <option value="School of Building and Environment">School of
+                    Building and Environment</option>
+                <option value="School of Management Studies">School of
+                    Management Studies</option>
+                <option value="School of Science & Humanities">School of Science
+                    & Humanities</option>
+                <option value="School of Law">School of Law</option>
+                <option value="School of Pharmacy">School of Pharmacy</option>
+                <option value="School of Nursing">School of Nursing</option>
+                <option value="School of Dental Sciences">School of Dental
+                    Sciences</option>
+
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="nameFilter" class="form-label">Event Name</label>
+            <input type="text" class="form-control" id="nameFilter" name="name"
+                placeholder="Enter event name">
+        </div>
+
+        <div class="mb-3">
+            <label for="monthFilter" class="form-label">Month</label>
+            <select class="form-control" id="monthFilter" name="month">
+                <option value>All Months</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+    </form>
 </div>
 
-{% endfor %}  -->
+<div class="container mt-5">
+    <div class="row card-container justify-content-between">
+    {% if filtered_events %}
+        {% for i in filtered_events %}
+
+        <div class=" item col-12 col-md-6 col-lg-4 col-xl-3">
+
+            <div class="card  card-flip" id="card">
+                <div class="cardbox card-inner card-front">
+                    <img src="{{ i['poster']}}" alt="Event Image"
+                        class="event-poster">
+                    <div>
+                        <div class="card-header">
+                            <h3 class="text-capitalize">{{ i['name']}}</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-column" style=" gap: 10px;">
+                                <div>
+                                    <i class="fa-solid fa-calendar"></i>
+                                    {{ i['date'] }}
+                                </div>
+                                <div>
+                                    <i class="fa-solid fa-clock"></i>
+                                    {{ i['time'] }}
+                                </div>
+                                <div>
+                                    <i class="fa-solid fa-location"></i>
+                                    {{ i['venue'] }}
+                                </div>
+                            </div>
+                            <br>
+                            <div style="display: flex;">
+                                <button class="button learn-more-btn">Learn More</button>
+                                {% if var %}
+                                <a href="{{ url_for('edit_event',id=i['_id'])}}"
+                                    class="btn btn-primary edit">Edit</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cardbox card-inner d-none card-back">
+                    <div class="card-body">
+                        <div class="d-flex flex-column text-capitalize"
+                            style=" gap: 10px;">
+                            {% if i['desc'] %}
+                            <p class="event-desc">
+                                <strong>Description: </strong><br>
+                                {{i['desc']}}
+                            </p>
+                            {% endif %}
+                            {% if i['eligibility'] %}
+                            <p class="event-eligibility">
+                                <strong>Eligibility:</strong><br>
+                                {{i['eligibility']}}
+                            </p>
+                            {% endif %}
+                            {% if i['awards'] %}
+                            <p class="event-awards">
+                                <strong>Awards: </strong><br>
+                                {{i['awards']}}
+                            </p>
+                            {% endif %}
+                            {% if i['date'] %}
+                            <p class="event-date">
+                                <strong>Date:</strong>
+                                {{ i['date']}}
+                            </p>
+                            {% endif %}
+                            {% if i['deadline'] %}
+                            <p class="event-deadline">
+                                <strong>Registration Deadline:</strong>
+                                {{ i['deadline']}}
+                            </p>
+                            {% endif %}
+                            {% if i['rlimit'] %}
+                            <p class="event-limit">
+                                <strong>Registration Limit:</strong>
+                                {{ i['rlimit']}}
+                            </p>
+                            {% endif %}
+                            {% if i['contact']%}
+                            <p class="event-cord">
+                                <strong>For further queries, contact:</strong><br>
+                                {{ i['contact'] }}
+                            </p>
+                            {% endif %}
+                            <p>
+                                <a
+                                    href="{{ url_for('event_register',event_name=i['name']) }}"
+                                    class="btn btn-info register-btn"
+                                    style="color: white;">Register</a>
+                            </p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>No events match the selected filters.</p>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

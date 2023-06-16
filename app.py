@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, flash, session, redirect, url_for
 from hashlib import sha256
 import pymongo
+from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 from PIL import Image
 from pytesseract import pytesseract
@@ -97,8 +98,6 @@ def events():
     else:
         var = False
     today_date = str(date.today())
-    print(today_date)
-    # today_date='2023-02-06'
     event = events_db.find()
     return render_template('events.html', event=event, var=var, today_date=today_date)
 
@@ -192,6 +191,14 @@ def upload():
     event_date = request.form.get('event_date')
     event_time = request.form.get('event_time')
     event_venue = request.form.get('event_venue')
+    event_eligibility = request.form.get('event_eligibility')
+    event_awards = request.form.get('event_awards')
+    event_desc = request.form.get('event_desc')
+    event_deadline = request.form.get('event_deadline')
+    event_limit = request.form.get('event_limit')
+    dept = request.form.get('dept')
+    print(dept)
+    event_cord = request.form.get('event_cord')
     broc = brochures_db.find().sort('_id', pymongo.DESCENDING).limit(1)
     for i in broc:
         file_path = i['uploaded_brochure']
@@ -201,16 +208,91 @@ def upload():
             'name': event_name,
             'venue': event_venue,
             'date': event_date,
-            'time': event_time
+            'time': event_time,
+            'awards': event_awards,
+            'eligibility': event_eligibility,
+            'desc': event_desc,
+            'deadline': event_deadline,
+            'rlimit': event_limit,
+            'dept': dept,
+            'contact': event_cord
+
+
         }
     )
+    flash('Event added successfully!')
+
     return redirect('/home')
+
+
+@app.route('/<id>/edit', methods=['GET', 'POST'])
+def edit_event(id):
+    event = events_db.find_one({"_id": ObjectId(id)})
+    return render_template('modify.html', id=id, event=event)
+
+
+@app.route('/update_event/<id>', methods=['GET', 'POST'])
+def update_event(id):
+    event_name = request.form.get('event_name')
+    event_date = request.form.get('event_date')
+    event_time = request.form.get('event_time')
+    event_venue = request.form.get('event_venue')
+    event_eligibility = request.form.get('event_eligibility')
+    event_awards = request.form.get('event_awards')
+    event_desc = request.form.get('event_desc')
+    event_deadline = request.form.get('event_deadline')
+    event_limit = request.form.get('event_limit')
+    dept = request.form.get('dept')
+    event_cord = request.form.get('event_cord')
+    event = events_db.update_one({"_id": ObjectId(id)},
+                                 {"$set": {
+                                     'name': event_name,
+                                     'venue': event_venue,
+                                     'date': event_date,
+                                     'time': event_time,
+                                     'awards': event_awards,
+                                     'eligibility': event_eligibility,
+                                     'desc': event_desc,
+                                     'deadline': event_deadline,
+                                     'rlimit': event_limit,
+                                     'dept': dept,
+                                     'contact': event_cord
+                                 }}
+                                 )
+    print(events_db.find_one({"_id": ObjectId(id)}))
+    flash('Event updated successfully!')
+    return redirect('/home')
+
+
+@app.route('/delete/<id>', methods=['GET', 'POST'])
+def delete(id):
+    print(id)
+    events_db.delete_one({"_id": ObjectId(id)})
+    flash('Event Deleted successfully!')
+
+    return redirect('/home')
+
+
+@app.route('/<event_name>/register', methods=['GET', 'POST'])
+def event_register(event_name=None):
+    return render_template('base.html', event_name=event_name)
 
 
 @app.route('/categories')
 def categories():
-    broc = brochures_db.find().sort('_id', pymongo.DESCENDING).limit(1)
-    return render_template('categories.html', broc=broc)
+    department = request.args.get('department')
+    event_name = request.args.get('name')
+    month = request.args.get('month')
+    filters = {}
+    if department:
+        filters['dept'] = department
+    if event_name:
+        filters['name'] = {'$regex': event_name, '$options': 'i'}
+    if month:
+        filters['date'] = {'$regex': f'{month}-'}
+    filtered_events = list(events_db.find(filters))
+
+    return render_template('categories.html', filtered_events=filtered_events)
 
 
 if __name__ == '__main__':

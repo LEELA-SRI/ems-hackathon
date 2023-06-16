@@ -24,124 +24,105 @@
     </div>
   </section>
 
+<div class="container mt-5">
+    <div class="row card-container justify-content-between">
 
-<div class="container mb-3">
-    <div class="row">
-
-
-   {% for i in event %}
+    {% for i in event %}
     {% if i['date'] > today_date %}
-    <div class="col-12 item  col-md-6 col-lg-4 col-xl-3 filter-upcoming">
+    <div class=" item col-12 col-md-6 col-lg-4 col-xl-3 filter-upcoming">
     {% elif i['date'] == today_date%}
-    <div class="col-12  item  col-md-6 col-lg-4 col-xl-3 filter-ongoing">
+    <div class=" item col-12 col-md-6 col-lg-4 col-xl-3 filter-ongoing">
     {% elif today_date > i['date']  %}
-    <div class="col-12 item  col-md-6 col-lg-4 col-xl-3 filter-past">
+    <div class=" item col-12 col-md-6 col-lg-4 col-xl-3 filter-past">
     {% endif %}
-
-
-    <div  class="card card-inner">
-        <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
-        <div>
-            <div class="card-header">
-                <h3 class="text-capitalize">{{ i['name']}}</h3>
-            </div>
-            <div class="card-body">
-                <p>Event Description</p>
-                <div  class="d-flex flex-column" style=" gap: 10px;">
-                    <div>
-                        <i class="fa-solid fa-calendar"></i>
-                        {{ i['date'] }}
-                    </div>
-                    <div>
-                        <i class="fa-solid fa-clock"></i>
-                        {{ i['time'] }}
-                    </div>
-                    <div>
-                        <i class="fa-solid fa-location"></i>
-                        {{ i['venue'] }}
-                    </div>
+      <div class="card  card-flip" id="card">
+        <div class="cardbox card-inner card-front">
+            <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
+            <div>
+                <div class="card-header">
+                    <h3 class="text-capitalize">{{ i['name']}}</h3>
                 </div>
-                <br>
-                <div style="display: flex;">
-                    <button class="button">Learn More</button>
-                    {% if var %}
-        <a href="#" class="btn btn-primary edit">Edit</a>
-        {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
- 
-  {% endfor %} 
-
-  </div>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- <div class="container mb-3">
-    <div class="row">
-
-
-   {% for i in event %}
-   {% if i['date'] > today_date %}
-   <div class="card col-lg-6 filter-upcoming">
-    {% elif i['date']== today_date%}
-    <div class="card col-lg-6 filter-ongoing">
-    {% elif i['date'] < today_date %}
-    <div class="card col-lg-6 filter-past">
-      {% endif %}
-
-
-    <div  class="d-flex flex_dir_card card-inner">
-        <img src="{{ i['poster']}}" alt="Event Image" class="event-poster">
-        <div>
-            <div class="card-header">
-                <h3 class="text-capitalize">{{ i['name']}}</h3>
-            </div>
-            <div class="card-body">
-                <p>Event Description</p>
-                <div  class="d-flex flex_dir" style=" gap: 15px;">
-                    <div>
-                        <i class="fa-solid fa-calendar"></i>
-                        {{ i['date'] }}
+                <div class="card-body">
+                    <div  class="d-flex flex-column" style=" gap: 10px;">
+                        <div>
+                            <i class="fa-solid fa-calendar"></i>
+                            {{ i['date'] }}
+                        </div>
+                        <div>
+                            <i class="fa-solid fa-clock"></i>
+                            {{ i['time'] }}
+                        </div>
+                        <div>
+                            <i class="fa-solid fa-location"></i>
+                            {{ i['venue'] }}
+                        </div>
                     </div>
-                    <div>
-                        <i class="fa-solid fa-clock"></i>
-                        {{ i['time'] }}
+                    <br>
+                    <div style="display: flex;">
+                        <button class="button learn-more-btn">Learn More</button>
+                        {% if var %}
+                            <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
+                        {% endif %}
                     </div>
-                    <div>
-                        <i class="fa-solid fa-location"></i>
-                        {{ i['venue'] }}
-                    </div>
-                </div>
-                <br>
-                <div style="display: flex;">
-                    <button class="button">Learn More</button>
-                    {% if var %}
-        <a href="#" class="btn btn-primary edit">Edit</a>
-        {% endif %}
                 </div>
             </div>
         </div>
+        
+        <div class="cardbox card-inner d-none card-back">
+          <div class="card-body">
+            <div  class="d-flex flex-column text-capitalize" style=" gap: 10px;">
+                {% if i['desc'] %}
+                <p class="event-desc">
+                    <strong>Description: </strong><br>
+                    {{i['desc']}}
+                </p>
+                {% endif %}
+                {% if i['eligibility'] %}
+                <p class="event-eligibility">
+                    <strong>Eligibility:</strong><br>
+                    {{i['eligibility']}}
+                </p>
+                {% endif %}
+                {% if i['awards'] %}
+                <p class="event-awards">
+                    <strong>Awards: </strong><br>
+                    {{i['awards']}}
+                </p>
+                {% endif %}
+                {% if i['date'] %}
+                <p class="event-date">
+                    <strong>Date:</strong>
+                    {{ i['date']}}
+                </p>
+                {% endif %}
+                {% if i['deadline'] %}
+                <p class="event-deadline">
+                    <strong>Registration Deadline:</strong>
+                    {{ i['deadline']}}
+                </p>
+                {% endif %}
+                {% if i['rlimit'] %}
+                <p class="event-limit">
+                    <strong>Registration Limit:</strong>
+                    {{ i['rlimit']}}
+                </p>
+                {% endif %}
+                {% if i['contact']%}
+                <p class="event-cord">
+                    <strong>For further queries, contact:</strong><br>
+                     {{ i['contact'] }}
+                </p>
+                {% endif %}
+                <p>
+                    <a href="{{ url_for('event_register',event_name=i['name']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
+                </p>
+                
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      {% endfor %}     
     </div>
-</div>
- 
-  {% endfor %} 
-
   </div>
-</div> -->
-
-
-
 {% endblock %}

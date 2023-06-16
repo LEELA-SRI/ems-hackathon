@@ -67,3 +67,22 @@ show_all_btn.addEventListener('click',function(){
   //   i.classList.remove('d-none')
   // }
 })
+
+var cards = document.querySelectorAll('.card');
+
+[...cards].forEach((card)=>{
+  card.addEventListener( 'click', function() {
+    card.classList.toggle('card-flipped');
+    if (card.classList.contains('card-flipped')){
+      card.querySelector('.card-front').classList.add('d-none');
+    card.querySelector('.card-back').classList.remove('d-none');
+
+    }
+    else{
+      card.querySelector('.card-front').classList.remove('d-none');
+
+    card.querySelector('.card-back').classList.add('d-none');
+    }
+    
+  });
+});

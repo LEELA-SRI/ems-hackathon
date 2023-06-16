@@ -5,7 +5,7 @@ body {
     backdrop-filter: blur(3px);
 }
 
-.card {
+.cardbox {
  
     background-color: #fff;
     border-radius: 10px;
@@ -31,7 +31,7 @@ body {
     border-radius: 5px;
 
 }
-.edit{
+.edit,.delete-btn{
     background: none;
     color:red;
     border:1px solid red
@@ -74,7 +74,36 @@ body {
     background: #47b2e4;
     color: #fff;
   }
+  .req::after {
+    content: "*";
+    color: red;
+    margin-left: 2px;
+  }
 
+  .card{
+    border-width: 0px !important;
+}
+.card-container {
+  perspective: 100vh;
+}
+
+.card-flip {
+  transition: transform 1s;
+  transform-style: preserve-3d;
+}
+
+.card-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  backface-visibility: hidden;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
 @media (min-width:320px) and (max-width:500px){
     .event-poster{
         width:-webkit-fill-available;
@@ -94,6 +123,7 @@ body {
 
 @media (min-width:501px) and  (max-width:768px){
     .card-inner {
+        display: flex;
         flex-direction: row;
     }
 }
