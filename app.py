@@ -113,8 +113,8 @@ def userlogin():
         if user:
             if sha256(str(password).encode()).hexdigest() == user['password']:
                 session['email'] = email
-
-                return redirect(url_for('addevent'))
+                flash("Logged in Successfully")
+                return redirect('/home')
             else:
                 flash("Incorrect Password")
         else:
@@ -280,6 +280,7 @@ def event_register(event_name=None):
 
 @app.route('/categories')
 def categories():
+    print(request.args)
     department = request.args.get('department')
     event_name = request.args.get('name')
     month = request.args.get('month')
@@ -289,11 +290,15 @@ def categories():
     if event_name:
         filters['name'] = {'$regex': event_name, '$options': 'i'}
     if month:
-        filters['date'] = {'$regex': f'{month}-'}
+        if int(month) < 10:
+            filters['date'] = {'$regex': f'0{month}-'}
+        else:
+            filters['date'] = {'$regex': f'{month}-'}
+    print(f"FLTER: {filters}")
     filtered_events = list(events_db.find(filters))
 
     return render_template('categories.html', filtered_events=filtered_events)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")

@@ -104,6 +104,35 @@ body {
 .card-back {
   transform: rotateY(180deg);
 }
+
+.flip-button {
+  position: relative;
+  display: inline-block;
+  color:  #5a5353;
+  text-decoration: none;
+}
+.flip-button:hover{
+  color: #1f5a7a
+}
+.flip-button::before {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width:70px;
+  height: 2px;
+
+  background-color: #1f5a7a;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s ease;
+}
+
+.flip-button:hover::before {
+  transform: scaleX(1);
+}
+
+
 @media (min-width:320px) and (max-width:500px){
     .event-poster{
         width:-webkit-fill-available;
