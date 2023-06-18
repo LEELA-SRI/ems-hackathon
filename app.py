@@ -1,3 +1,4 @@
+import csv
 from flask import Flask, render_template, request, flash, send_file, send_from_directory, session, redirect, url_for
 from hashlib import sha256
 import pymongo
@@ -109,7 +110,7 @@ def image_to_text(path_im):
     return venues, dates, times
 
 
-@app.route('/', methods=['GET'])
+
 @app.route('/home', methods=['GET'])
 def events():
     is_admin = session['is_admin'] 
@@ -121,7 +122,7 @@ admin_username = "admin"
 admin_password = "admin123" 
 admin_hashpass = sha256(str(admin_password).encode()).hexdigest()
 
-
+@app.route('/', methods=['GET',"POST"])
 @app.route('/login',methods=["GET","POST"])
 def login():
     if request.method == 'POST':
@@ -186,7 +187,7 @@ def register():
 
 @app.route("/addevent", methods=["POST", "GET"])
 def addevent():
-    if session.items() and session['email']:
+    if session['is_admin'] == True:
 
         if request.method == 'POST':
             if 'uploaded_file' not in request.files:
@@ -228,6 +229,7 @@ def upload():
     event_deadline = request.form.get('event_deadline')
     event_limit = request.form.get('event_limit')
     dept = request.form.get('dept')
+    event_type = request.form.get('type')
     print(dept)
     event_cord = request.form.get('event_cord')
     broc = brochures_db.find().sort('_id', pymongo.DESCENDING).limit(1)
@@ -246,7 +248,8 @@ def upload():
             'deadline': event_deadline,
             'rlimit': event_limit,
             'dept': dept,
-            'contact': event_cord
+            'contact': event_cord,
+            'type':event_type
 
 
         }
@@ -275,6 +278,7 @@ def update_event(id):
     event_limit = request.form.get('event_limit')
     dept = request.form.get('dept')
     event_cord = request.form.get('event_cord')
+    event_type = request.form.get('type')
     events_db.update_one({"_id": ObjectId(id)},
                                  {"$set": {
                                      'name': event_name,
@@ -287,7 +291,8 @@ def update_event(id):
                                      'deadline': event_deadline,
                                      'rlimit': event_limit,
                                      'dept': dept,
-                                     'contact': event_cord
+                                     'contact': event_cord,
+                                     'type':event_type
                                  }}
                                  )
     print(events_db.find_one({"_id": ObjectId(id)}))
@@ -303,32 +308,34 @@ def delete(id):
     return redirect('/home')
 
 
-def save_team_registration_data(data,event_name):
-    data['event_name'] = event_name
-    
-    registrations_db.insert_one(data)
-    try:
-        df = pd.read_excel(f'{event_name}.xlsx')
-    except FileNotFoundError:
-        df = pd.DataFrame(data,index=[0])
-    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-    df.to_excel(f'{event_name}.xlsx', index=False, header=True)
+@app.route('/export/<id>', methods=['GET'])
+def export(id):
+    records = registrations_db.find({"event_id": id})
+    event = events_db.find_one({"_id": ObjectId(id)})
+    print(records,'-----------------------------')
+    if registrations_db.count_documents({"event_id": id}) == 0:
+        flash("No records found for the event.")
+        return redirect('/home')
+    csv_file = f"{event['name']}.csv"
+    with open(csv_file,'w',newline="") as reg_file:
+        writer_obj = csv.DictWriter(reg_file,fieldnames = records[0].keys())
+        writer_obj.writeheader()
+        writer_obj.writerows(records)
+    return send_file(csv_file,as_attachment=True)
 
-@app.route('/export/<event_name>', methods=['GET'])
-def export(event_name):
-    if session.get('is_admin'):
-        file_path = f'{event_name}.xlsx'
+    # if session.get('is_admin'):
+    #     file_path = f'{event_name}.xlsx'
         
-        try:
-            return send_file(file_path, as_attachment=True, attachment_filename=f'{event_name}.xlsx')
-        except FileNotFoundError:
-            flash("No file found to download.")
-            return redirect(url_for('events'))
-    else:
-        flash("You do not have permission to download the file.")
-        return redirect(url_for('events'))
+    #     try:
+    #         return send_file(file_path, as_attachment=True, attachment_filename=f'{event_name}.xlsx')
+    #     except FileNotFoundError:
+    #         flash("No file found to download.")
+    #         return redirect(url_for('events'))
+    # else:
+    #     flash("You do not have permission to download the file.")
+    #     return redirect(url_for('events'))
 
-    # return send_file(f'{event_name}.xlsx', as_attachment=True, attachment_filename=f'{event_name}.xlsx')
+    # # return send_file(f'{event_name}.xlsx', as_attachment=True, attachment_filename=f'{event_name}.xlsx')
 
         
 @app.route('/register/<id>', methods=['GET', 'POST'])
@@ -366,10 +373,11 @@ def event_register(id):
             'branch': form.branch.data,
             'section': form.section.data,
             'year': form.year.data,
-            'event_id':id
+            'event_id':id,
+            "event_name":event['name']
         }
         print(registration_data)
-        save_team_registration_data(registration_data,event['name'])
+        registrations_db.insert_one(registration_data)
         # send_email_notification(registration_data,event)
         flash('Registration successful!')
         return redirect('/home')

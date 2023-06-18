@@ -62,7 +62,7 @@
                     <div class="d-flex gap-2">
                       {% if is_admin == True %}
                       <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
-                      <a href="{{ url_for('export',event_name=i['name'])}}" class="btn">Export</a>
+                      <a href="{{ url_for('export',id=i['_id'])}}" class="btn">Export CSV</a>
                       {% else %}
                       <button class="button learn-more-btn">Learn More</button>
                       <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>

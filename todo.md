@@ -8,7 +8,7 @@
       [x]dynamically keep a count of registrations
       [x]push registrations to excel
       [x]keep a eye on duplicate registrations
-      []send excel to {someone} after registrations close
+      [x]send excel to {someone} after registrations close
        
 []UI 
 [x]categories bug
@@ -16,9 +16,10 @@
 [x]exception handlers
 []registration deadline,event date
 []validators
-[]team and individual filter
+[x]team and individual filter
 []multi line description handler
 []datebug
 [x]type display in events,categories,modify,addevent
+[]login,logout
 []optimize
 [x]admin login
