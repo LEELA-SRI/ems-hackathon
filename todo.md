@@ -4,7 +4,7 @@
 [x]navbar-login,register,filter,browse events,search
 
 [x]-registration form 
-      []mail particpants after filling form
+      [x]mail particpants after filling form
       [x]dynamically keep a count of registrations
       [x]push registrations to excel
       [x]keep a eye on duplicate registrations
@@ -14,11 +14,11 @@
 [x]categories bug
 [x]login redirect
 [x]exception handlers
-[]registration deadline,event date
-[]validators
+[x]registration deadline,event date
+[x]validators
 [x]team and individual filter
 []multi line description handler
-[]datebug
+[x]datebug
 [x]type display in events,categories,modify,addevent
 []login,logout
 []optimize

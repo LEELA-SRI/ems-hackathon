@@ -1,5 +1,5 @@
 import csv
-from flask import Flask, render_template, request, flash, send_file, send_from_directory, session, redirect, url_for
+from flask import Flask, render_template, request, flash, send_file, session, redirect, url_for
 from hashlib import sha256
 import pymongo
 from bson.objectid import ObjectId
@@ -8,13 +8,13 @@ from PIL import Image
 from pytesseract import pytesseract
 import re
 import os
-from datetime import date
+from datetime import datetime,date
 import datefinder
-import pandas as pd
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SubmitField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, NumberRange, Optional
-from flask_mail import Mail, Message
+from email.message import EmailMessage
+import smtplib,ssl
 
 app = Flask(__name__)
 
@@ -235,28 +235,33 @@ def upload():
     broc = brochures_db.find().sort('_id', pymongo.DESCENDING).limit(1)
     for i in broc:
         file_path = i['uploaded_brochure']
-    events_db.insert_one(
-        {
-            'poster': file_path,
-            'name': event_name,
-            'venue': event_venue,
-            'date': event_date,
-            'time': event_time,
-            'awards': event_awards,
-            'eligibility': event_eligibility,
-            'desc': event_desc,
-            'deadline': event_deadline,
-            'rlimit': event_limit,
-            'dept': dept,
-            'contact': event_cord,
-            'type':event_type
+    if date_validator(event_date,event_deadline) == False:
+        flash("Registration Deadline should be on or before the event date")
+        return render_template('addevent.html')
+
+    else:
+        events_db.insert_one(
+            {
+                'poster': file_path,
+                'name': event_name,
+                'venue': event_venue,
+                'date': event_date,
+                'time': event_time,
+                'awards': event_awards,
+                'eligibility': event_eligibility,
+                'desc': event_desc,
+                'deadline': event_deadline,
+                'rlimit': event_limit,
+                'dept': dept,
+                'contact': event_cord,
+                'type':event_type
 
 
-        }
-    )
-    flash('Event added successfully!')
+            }
+        )
+        flash('Event added successfully!')
 
-    return redirect('/home')
+        return redirect('/home')
 
 
 @app.route('/<id>/edit', methods=['GET', 'POST'])
@@ -264,9 +269,20 @@ def edit_event(id):
     event = events_db.find_one({"_id": ObjectId(id)})
     return render_template('modify.html', id=id, event=event)
 
+def date_validator(date1,date2):
+    try:
+        dt1 = datetime.strptime(date1, "%Y-%m-%d")
+        dt2 = datetime.strptime(date2, "%Y-%m-%d")
+        if dt1 >= dt2:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
 
 @app.route('/update_event/<id>', methods=['GET', 'POST'])
 def update_event(id):
+    event = events_db.find_one({"_id": ObjectId(id)})
     event_name = request.form.get('event_name')
     event_date = request.form.get('event_date')
     event_time = request.form.get('event_time')
@@ -279,25 +295,29 @@ def update_event(id):
     dept = request.form.get('dept')
     event_cord = request.form.get('event_cord')
     event_type = request.form.get('type')
-    events_db.update_one({"_id": ObjectId(id)},
-                                 {"$set": {
-                                     'name': event_name,
-                                     'venue': event_venue,
-                                     'date': event_date,
-                                     'time': event_time,
-                                     'awards': event_awards,
-                                     'eligibility': event_eligibility,
-                                     'desc': event_desc,
-                                     'deadline': event_deadline,
-                                     'rlimit': event_limit,
-                                     'dept': dept,
-                                     'contact': event_cord,
-                                     'type':event_type
-                                 }}
-                                 )
-    print(events_db.find_one({"_id": ObjectId(id)}))
-    flash('Event updated successfully!')
-    return redirect('/home')
+    if date_validator(event_date,event_deadline) == False:
+        flash("Registration Deadline should be on or before the event date")
+        return render_template('modify.html', id=id, event=event)
+    else:
+        events_db.update_one({"_id": ObjectId(id)},
+                                    {"$set": {
+                                        'name': event_name,
+                                        'venue': event_venue,
+                                        'date': event_date,
+                                        'time': event_time,
+                                        'awards': event_awards,
+                                        'eligibility': event_eligibility,
+                                        'desc': event_desc,
+                                        'deadline': event_deadline,
+                                        'rlimit': event_limit,
+                                        'dept': dept,
+                                        'contact': event_cord,
+                                        'type':event_type
+                                    }}
+                                    )
+        print(events_db.find_one({"_id": ObjectId(id)}))
+        flash('Event updated successfully!')
+        return redirect('/home')
 
 
 @app.route('/delete/<id>', methods=['GET', 'POST'])
@@ -323,20 +343,23 @@ def export(id):
         writer_obj.writerows(records)
     return send_file(csv_file,as_attachment=True)
 
-    # if session.get('is_admin'):
-    #     file_path = f'{event_name}.xlsx'
-        
-    #     try:
-    #         return send_file(file_path, as_attachment=True, attachment_filename=f'{event_name}.xlsx')
-    #     except FileNotFoundError:
-    #         flash("No file found to download.")
-    #         return redirect(url_for('events'))
-    # else:
-    #     flash("You do not have permission to download the file.")
-    #     return redirect(url_for('events'))
+def send_email_notification(data,event):
+    
+    receiver_email = data['email']
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    em = EmailMessage()
+    em['From'] = sender_email
+    em['To'] =  data['email']
+    em["subject"] = "Registration success"
+    message=f"Hey {data['name']},\n\nYou have successfully registered for {data['event_name']}.Make sure to be there on {event['date']}\n at {event['venue']}\n\nBest of luck!\nFor further queries contact {event['contact']}."
+    em.set_content(message)
 
-    # # return send_file(f'{event_name}.xlsx', as_attachment=True, attachment_filename=f'{event_name}.xlsx')
+    context = ssl.create_default_context()
 
+    with smtplib.SMTP_SSL('smtp.gmail.com',465,context=context) as smtp:
+        smtp.login(sender_email,password)
+        smtp.sendmail(sender_email,receiver_email,em.as_string())
         
 @app.route('/register/<id>', methods=['GET', 'POST'])
 def event_register(id):
@@ -378,8 +401,8 @@ def event_register(id):
         }
         print(registration_data)
         registrations_db.insert_one(registration_data)
-        # send_email_notification(registration_data,event)
-        flash('Registration successful!')
+        send_email_notification(registration_data,event)
+        flash('Registration successful.Confirmation Mail sent :)')
         return redirect('/home')
     return render_template('indreg.html',form=form,event=event,registration_count=registration_count)
 
@@ -422,26 +445,6 @@ if __name__ == '__main__':
 
 
 
-
-# app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-# app.config['MAIL_PORT'] = 465
-# app.config['MAIL_USERNAME'] = ''
-# app.config['MAIL_PASSWORD'] = ''
-# app.config['MAIL_USE_TLS'] = False
-# app.config['MAIL_USE_SSL'] = True
-# mail = Mail(app)
-
-# def send_email_notification(registration_data,event):  
-#     event_name = event['name']
-#     event_date = event['date']
-#     event_venue = event['venue']
-#     contact = event['contact']
-
-#     msg = Message('Registration Successful',
-#                   sender='',
-#                   recipients=[registration_data['Email']])
-#     msg.body = f"Hey {registration_data['Name']},\n\nYou have successfully registered for {event_name}.Make sure to be there on {event_date}\n at {event_venue}\n\nBest of luck!\nFor further queries contact {contact}."
-#     mail.send(msg)
 
 
 # class TeamMemberForm(FlaskForm):
