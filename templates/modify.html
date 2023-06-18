@@ -18,7 +18,7 @@
         <div class="col-12 col-md-6 mx-auto">
           <div class="mb-3">
             <label for="" class=" form-label req">Name of the Event</label>
-            <input type="text" name="event_name" class="form-control" id="" aria-describedby="" value="{{ event['name'] }} "
+            <input type="text" name="event_name" class="form-control" id="" aria-describedby="" value="{{ event['name'] }}"
               required>
           </div>
           <div class="mb-3">
@@ -57,6 +57,14 @@
             <label for="" class=" form-label">Registration Limit   </label>
             <input type="number/text" class="form-control" id="" value = "{{ event['rlimit'] }}" name="event_limit">
           </div>
+          <div class="mb-3">
+            <label for="typeFilter" class="form-label">Event Type</label>
+            <select class="form-control" id="typeFilter" name="type">
+                <option value="{{event['type']}}">{{event['type']}}</option>
+                <option value="team">Team</option>
+                <option value="individual">Individual</option>
+            </select>
+        </div>
           <div class="mb-3">
             <label for="" class=" form-label req">Contact Number  </label>
             <input type="text" class="form-control" id="" value = "{{ event['contact'] }}" name="event_cord" required>
