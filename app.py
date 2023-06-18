@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, session, redirect, url_for
+from flask import Flask, render_template, request, flash, send_file, send_from_directory, session, redirect, url_for
 from hashlib import sha256
 import pymongo
 from bson.objectid import ObjectId
@@ -9,9 +9,15 @@ import re
 import os
 from datetime import date
 import datefinder
-
+import pandas as pd
+from flask_wtf import FlaskForm
+from wtforms import StringField, IntegerField, SelectField, SubmitField, FieldList, FormField
+from wtforms.validators import DataRequired, Email, NumberRange, Optional
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
+
+
 
 app.config['SECRET_KEY'] = "oohlala"
 app.config['UPLOAD_FOLDER'] = 'static/images/uploaded'
@@ -27,6 +33,20 @@ db = client.avalanche
 events_db = db.events
 users_db = db.users
 brochures_db = db.brochures
+registrations_db = db.registrations
+
+
+class IndividualRegistrationForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    reg_number = StringField('Registration Number', validators=[DataRequired()])
+    mobile_number = StringField('Mobile Number', validators=[DataRequired()])
+    branch = SelectField('Branch', choices=[('CSE', 'CSE'), ('IT', 'IT'), ('EEE', 'EEE'),('ECE','ECE'),('Mechanical','Mechanical'),('Mechatronics','Mechatronics'),('Bio Informatics','Bio Informatics')], validators=[DataRequired()])
+    section = StringField('Section', validators=[DataRequired()])
+    year = SelectField('Year', choices=[('1', '1st Year'), ('2', '2nd Year'),('3', '3rd Year'),('4', '4th Year')], validators=[DataRequired()])
+    submit = SubmitField('Register')
+
+
 
 
 ALLOWED_EXTS = set(['png', 'jpg', 'jpeg', 'webp'])
@@ -92,65 +112,76 @@ def image_to_text(path_im):
 @app.route('/', methods=['GET'])
 @app.route('/home', methods=['GET'])
 def events():
-
-    if session.items() and session['email']:
-        var = True
-    else:
-        var = False
+    is_admin = session['is_admin'] 
     today_date = str(date.today())
     event = events_db.find()
-    return render_template('events.html', event=event, var=var, today_date=today_date)
+    return render_template('events.html', event=event, today_date=today_date,is_admin=is_admin)
+
+admin_username = "admin"
+admin_password = "admin123" 
+admin_hashpass = sha256(str(admin_password).encode()).hexdigest()
 
 
-@app.route('/userlogin', methods=["GET", "POST"])
-def userlogin():
+@app.route('/login',methods=["GET","POST"])
+def login():
     if request.method == 'POST':
-        email = request.form.get("email")
+        username = request.form.get("username")
         password = request.form.get("password")
+        print(username, password)
+        hashed_password = sha256(str(password).encode()).hexdigest()
+
         user = users_db.find_one(
-            {'email': email}
-        )
-        if user:
-            if sha256(str(password).encode()).hexdigest() == user['password']:
-                session['email'] = email
+            {'username' : username}
+        ) 
+        print(user)
+        
+        if username == admin_username:
+            if hashed_password == admin_hashpass:
+                session['is_admin'] = True
                 flash("Logged in Successfully")
-                return redirect('/home')
+                return redirect(url_for('events'))
             else:
                 flash("Incorrect Password")
         else:
-            flash("user doesnt Exist")
+            if hashed_password == user['password']:
+                session['is_admin'] = False
+                flash("Logged in Successfully")
+                return redirect(url_for('events'))
+            else:
+                flash("Incorrect Password")
     return render_template('userlogin.html')
 
 
-@app.route('/registerUser', methods=['GET', 'POST'])
-def userregister():
+@app.route('/register', methods=['GET', 'POST'])
+def register():
     if request.method == 'POST':
-        email = request.form.get("email")
-        password = request.form.get("password")
-        cpassword = request.form.get("cpassword")
+        username = request.form.get('username')
+        password = request.form.get('password')
+        cpassword = request.form.get('cpassword')
         user = users_db.find_one(
-            {'email': email}
+            {'username': username}
         )
         if user == None:
             if password == cpassword:
                 hashpass = sha256(str(password).encode()).hexdigest()
-                users_db.insert_one({'email': email, 'password': hashpass})
-                session['email'] = email
-                return render_template('userlogin.html')
+                users_db.insert_one({'username': username, 'password': hashpass})
+                # session['is_admin'] = False
+                return redirect('/login')
             else:
                 flash('passwords donot match')
         else:
-            flash('Mail-id already exists')
-    return render_template('userregister.html')
+            flash('Username already exists.Kindly Login')
+            return redirect('/login')
+    return render_template('userregister.html')       
 
 
-@app.route("/logout", methods=["POST", "GET"])
-def logout():
-    if "email" in session:
-        session.pop("email", None)
-        return redirect('/home')
-    else:
-        return redirect('/home')
+# @app.route("/logout", methods=["POST", "GET"])
+# def logout():
+#     if "username" in session:
+#         session.pop("username", None)
+#         return redirect('/home')
+#     else:
+#         return redirect('/home')
 
 
 @app.route("/addevent", methods=["POST", "GET"])
@@ -244,7 +275,7 @@ def update_event(id):
     event_limit = request.form.get('event_limit')
     dept = request.form.get('dept')
     event_cord = request.form.get('event_cord')
-    event = events_db.update_one({"_id": ObjectId(id)},
+    events_db.update_one({"_id": ObjectId(id)},
                                  {"$set": {
                                      'name': event_name,
                                      'venue': event_venue,
@@ -269,13 +300,81 @@ def delete(id):
     print(id)
     events_db.delete_one({"_id": ObjectId(id)})
     flash('Event Deleted successfully!')
-
     return redirect('/home')
 
 
-@app.route('/<event_name>/register', methods=['GET', 'POST'])
-def event_register(event_name=None):
-    return render_template('base.html', event_name=event_name)
+def save_team_registration_data(data,event_name):
+    data['event_name'] = event_name
+    
+    registrations_db.insert_one(data)
+    try:
+        df = pd.read_excel(f'{event_name}.xlsx')
+    except FileNotFoundError:
+        df = pd.DataFrame(data,index=[0])
+    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
+    df.to_excel(f'{event_name}.xlsx', index=False, header=True)
+
+@app.route('/export/<event_name>', methods=['GET'])
+def export(event_name):
+    if session.get('is_admin'):
+        file_path = f'{event_name}.xlsx'
+        
+        try:
+            return send_file(file_path, as_attachment=True, attachment_filename=f'{event_name}.xlsx')
+        except FileNotFoundError:
+            flash("No file found to download.")
+            return redirect(url_for('events'))
+    else:
+        flash("You do not have permission to download the file.")
+        return redirect(url_for('events'))
+
+    # return send_file(f'{event_name}.xlsx', as_attachment=True, attachment_filename=f'{event_name}.xlsx')
+
+        
+@app.route('/register/<id>', methods=['GET', 'POST'])
+def event_register(id):
+    event = events_db.find_one({"_id": ObjectId(id)}) 
+    form = IndividualRegistrationForm()
+    registration_count = registrations_db.count_documents({'event_id': id})
+    print(registration_count,'brrrrrrrrrrrr')
+    registration_limit = int(event['rlimit'])
+    print(registration_limit,'hhhhhhhhhhhhh',type(registration_limit),type(registration_count))
+
+    if registration_count >= registration_limit:
+            flash('Registration limit has been reached for this event.')
+            return redirect('/home')
+
+    elif form.validate_on_submit():
+        reg_num = form.reg_number.data
+        email = form.email.data
+
+        existing_registration = registrations_db.find_one({
+            'event_id': id,
+            "$or": [{'email':email},{'reg_num' :reg_num}],
+            
+            })
+        print(existing_registration)
+        if existing_registration:
+            flash('You have already registered for this event.')
+            return redirect('/home')
+
+        registration_data = {
+            'name': form.name.data,
+            'email': email,
+            'reg_num': reg_num,
+            'mobile_num': form.mobile_number.data,
+            'branch': form.branch.data,
+            'section': form.section.data,
+            'year': form.year.data,
+            'event_id':id
+        }
+        print(registration_data)
+        save_team_registration_data(registration_data,event['name'])
+        # send_email_notification(registration_data,event)
+        flash('Registration successful!')
+        return redirect('/home')
+    return render_template('indreg.html',form=form,event=event,registration_count=registration_count)
+
 
 
 @app.route('/categories')
@@ -284,6 +383,7 @@ def categories():
     department = request.args.get('department')
     event_name = request.args.get('name')
     month = request.args.get('month')
+    event_type = request.args.get('type')
     filters = {}
     if department:
         filters['dept'] = department
@@ -294,6 +394,8 @@ def categories():
             filters['date'] = {'$regex': f'0{month}-'}
         else:
             filters['date'] = {'$regex': f'{month}-'}
+    if event_type:
+        filters['type'] = event_type
     print(f"FLTER: {filters}")
     filtered_events = list(events_db.find(filters))
 
@@ -302,3 +404,101 @@ def categories():
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0")
+
+
+
+
+
+
+
+
+
+
+
+# app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# app.config['MAIL_PORT'] = 465
+# app.config['MAIL_USERNAME'] = ''
+# app.config['MAIL_PASSWORD'] = ''
+# app.config['MAIL_USE_TLS'] = False
+# app.config['MAIL_USE_SSL'] = True
+# mail = Mail(app)
+
+# def send_email_notification(registration_data,event):  
+#     event_name = event['name']
+#     event_date = event['date']
+#     event_venue = event['venue']
+#     contact = event['contact']
+
+#     msg = Message('Registration Successful',
+#                   sender='',
+#                   recipients=[registration_data['Email']])
+#     msg.body = f"Hey {registration_data['Name']},\n\nYou have successfully registered for {event_name}.Make sure to be there on {event_date}\n at {event_venue}\n\nBest of luck!\nFor further queries contact {contact}."
+#     mail.send(msg)
+
+
+# class TeamMemberForm(FlaskForm):
+#     reg_number = StringField('Registration Number')
+    
+
+# class TeamRegistrationForm(FlaskForm):
+#     team_lead_name = StringField('Team Leader Name', validators=[DataRequired()])
+#     team_lead_email = StringField('Team Leader Email', validators=[DataRequired(), Email()])
+#     team_lead_branch = SelectField('Team Leader Branch', choices=[('CSE', 'CSE'), ('IT', 'IT'), ('EEE', 'EEE'),('ECE','ECE'),('Mechanical','Mechanical'),('Mechatronics','Mechatronics'),('Bio Informatics','Bio Informatics')], validators=[DataRequired()])
+#     team_lead_year = SelectField('Team Leader Year', choices=[('1st', '1st Year'), ('2nd', '2nd Year'), ('3rd', '3rd Year'),('4th','4th year')], validators=[DataRequired()])
+#     team_lead_section = StringField('Team Leader Section', validators=[DataRequired()])
+#     team_lead_reg_num = StringField('Team Leader Registration Number', validators=[DataRequired()])
+#     team_size = StringField('Team Size', validators=[DataRequired()])
+#     team_members = FieldList(FormField(TeamMemberForm), min_entries=2, max_entries=10)
+#     submit = SubmitField('Register')
+
+
+# @app.route('/register/<id>', methods=['GET', 'POST'])
+# def event_register(id):
+#     event = events_db.find_one({"_id": ObjectId(id)})
+#     event_size = 4
+#     print(event)
+#     event_type = event['type']
+    
+#     if event_type == 'individual':
+#         form = IndividualRegistrationForm()
+#         if form.validate_on_submit():
+#             registration_data = {
+#                 'Name': form.name.data,
+#                 'Email': form.email.data,
+#                 'Registration Number': form.reg_number.data,
+#                 'Mobile Number': form.mobile_number.data,
+#                 'Branch': form.branch.data,
+#                 'Section': form.section.data,
+#                 'Year': form.year.data
+#             }
+#             print(registration_data)
+#             save_team_registration_data(registration_data,event['name'])
+#             # send_email_notification(registration_data,event)
+#             flash('Registration successful!')
+#             return redirect('/home')
+#         return render_template('indreg.html',form=form,event=event)
+#     elif event_type == 'team':
+#         print('--------------------------------------------------------hi')
+#         form = TeamRegistrationForm()
+#         form.team_members.entries = [TeamMemberForm() for _ in range(event_size - 1)]
+#         if form.validate_on_submit():
+#             print('---------------------')
+#             registration_data = {
+#                 'Team Lead Name': form.team_lead_name.data,
+#                 'Team Lead Email': form.team_lead_email.data,
+#                 'Team Lead Branch': form.team_lead_branch.data,
+#                 'Team Lead Year': form.team_lead_year.data,
+#                 'Team Lead Section': form.team_lead_section.data,
+#                 'Team Lead Registration Number': form.team_lead_reg_num.data,
+#                 'Team Size': form.team_size.data,
+#                 'Team Member Registration Numbers': [field.reg_number.data for field in form.team_members]
+#             }
+#             print(registration_data)
+
+#             save_team_registration_data(registration_data,event['name'])
+#             # send_email_notification(registration_data,event)
+#             flash('Registration successful!')
+#             return redirect('/home')
+#         else:
+#             print(form.errors)
+#         return render_template('teamreg.html',form=form,event=event)

@@ -5,11 +5,11 @@
 <div class="container d-flex align-items-center mb-5">
    
         <div class="h3">Browse Events</div>
-        {% if var %}
+        {% if is_admin %}
       <a href="{{ url_for('addevent') }}" class="btn btn-primary ms-auto add-event ">Add Event</a>
-{% else %}
-      <a href="{{ url_for('userlogin') }}" class="btn btn-primary ms-auto add-event ">Add Event</a>
-      {% endif %}
+      {% else %}
+      <div></div>
+ {% endif %}
 </div>
 
   <section class=portfolio id=Events>
@@ -25,7 +25,7 @@
   </section>
 
 <div class="container mt-5">
-    <div class="row card-container justify-content-between">
+    <div class="row card-container ">
     
     {% for i in event %}
     {% if i['date'] > today_date %}
@@ -58,10 +58,14 @@
                         </div>
                     </div>
                     <br>
-                    <div style="display: flex;">
-                        <button class="button learn-more-btn">Learn More</button>
-                        {% if var %}
-                            <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
+
+                    <div class="d-flex gap-2">
+                      {% if is_admin == True %}
+                      <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
+                      <a href="{{ url_for('export',event_name=i['name'])}}" class="btn">Export</a>
+                      {% else %}
+                      <button class="button learn-more-btn">Learn More</button>
+                      <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
                         {% endif %}
                     </div>
                 </div>
@@ -81,6 +85,10 @@
                 <p class="event-eligibility">
                     <strong>Eligibility:</strong><br>
                     {{i['eligibility']}}
+                </p>
+                <p class="event-type">
+                  <strong>Event Type:</strong><br>
+                  {{i['type']}}
                 </p>
                 {% endif %}
                 {% if i['awards'] %}
@@ -117,7 +125,7 @@
                 <a  class="flip-button" style="cursor: pointer;">Go back</a>
 
                 <p>
-                    <a href="{{ url_for('event_register',event_name=i['name']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
+                    <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
                 </p>
                 
             </div>
@@ -127,7 +135,8 @@
         </div>
       </div>
       </div>
-      {% endfor %}     
+      {% endfor %}   
+      <div class="no-items-msg d-none text-center">No items to show :(</div>  
     </div>
   </div>
 {% endblock %}

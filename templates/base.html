@@ -12,13 +12,14 @@
 
   </head>
   <body>
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <nav class="navbar navbar-expand-sm ">
         <div class="container-fluid">
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <div class="collapse navbar-collapse px-2" id="navbarSupportedContent">
+            <img src="static/images/sb_logo.jpg" alt="Sathyabama logo" class="logo">
+            <ul class="navbar-nav ms-auto gap-4">
                 <li class="nav-item">
                     <a class="nav-link " href="{{ url_for('events') }}">Browse Events</a>
                 </li>
@@ -26,22 +27,18 @@
                   <a class="nav-link" aria-current="page" href="{{ url_for('categories') }}">Categories</a>
                 </li>
 
-                {% if session['email'] %}
+               
                 <li class="nav-item">
-                  <a class="nav-link " aria-current="page" href="{{ url_for('logout') }}">Logout</a>
-              </li>
-              {% else %}
-                <li class="nav-item">
-                    <a class="nav-link " aria-current="page" href="{{ url_for('userlogin') }}">Login</a>
+                    <a class="nav-link " aria-current="page" href="{{ url_for('login') }}">Login</a>
                 </li>
-              {% endif %}
+              
               
             </ul>
            
           </div>
         </div>
       </nav>
-      <div class="container mt-4">
+      <div class="container my-4">
         {% with messages = get_flashed_messages() %}
  	{%  if  messages %}
    <div id="flash-messages">
@@ -68,6 +65,25 @@
       {% block content%}
       {% endblock %}
     </div>
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <h4>About Us</h4>
+            <p>Sathyabama EMS : Simplify college events . Seamless planning, registration, and promotion. Elevate your college events with ease.</p>
+          </div>
+          <div class="col-md-6">
+            
+            <p>Address: 123 Street, City, Country</p>
+            <p>Phone: 123-456-7890</p>
+            <p>Email:studenthelpdesk@sathyabama.ac.in</p>
+          </div>
+        </div>
+        <hr>
+        <p class="text-center">&copy; 2023 Your Website. All rights reserved.</p>
+      </div>
+    </footer>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
   <script src="{{url_for('static',filename='js/script.js')}}"></script>
 
