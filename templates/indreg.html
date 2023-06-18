@@ -13,7 +13,8 @@
               {{ form.email.label(class="form-label") }} {{ form.email(class="form-control") }}
             </div>
             <div class="mb-3">
-              {{ form.reg_number.label(class="form-label") }} {{ form.reg_number(class="form-control") }}
+              
+              {{ form.reg_number.label(class="form-label") }} {{ form.reg_number(class="form-control",value=username, readonly="readonly") }}
             </div>
             <div class="mb-3">
               {{ form.mobile_number.label(class="form-label") }} {{ form.mobile_number(class="form-control") }}
@@ -29,13 +30,9 @@
             </div>
             <!-- Add this code inside the form -->
 <div class="form-group mb-3">
-  {% if registration_count >= event['rlimit']|int %}
-    <button class="btn btn-primary" disabled data-toggle="tooltip" data-placement="top" title="Registrations closed">
-      Registered
-    </button>
-  {% else %}
+  
     {{ form.submit(class="btn btn-primary") }}
-  {% endif %}
+  
 </div>
 
             <!-- <div class="">

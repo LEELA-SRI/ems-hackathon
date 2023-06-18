@@ -62,11 +62,21 @@
                     <div class="d-flex gap-2">
                       {% if is_admin == True %}
                       <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
-                      <a href="{{ url_for('export',id=i['_id'])}}" class="btn">Export CSV</a>
+                      <a href="{{ url_for('export',id=i['_id'])}}" class="btn export">Export CSV</a>
                       {% else %}
-                      <button class="button learn-more-btn">Learn More</button>
-                      <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
+                      
+                      <div class="form-group mb-3">
+                        {% if i['reg_count']|int >= i['rlimit']|int %}
+                        <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Registrations are closed">
+                          <button class="btn btn-secondary" style="pointer-events: none;" type="button" disabled>Register</button>
+                        </span>
+                        {% else %}
+                        <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-primary register-btn" >Register</a>
+                        
                         {% endif %}
+                      </div>
+                      <button class="btn learn-more-btn">Learn More</button>
+                {% endif %}
                     </div>
                 </div>
             </div>
@@ -124,9 +134,17 @@
                 
                 <a  class="flip-button" style="cursor: pointer;">Go back</a>
 
-                <p>
-                    <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
-                </p>
+                
+                <div class="form-group mb-3">
+                  {% if i['reg_count']|int >= i['rlimit']|int %}
+                    <button class="btn btn-primary" disabled data-toggle="tooltip" data-placement="top" title="Registrations closed">
+                      Registration closed
+                    </button>
+                  {% else %}
+                  <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
+                    
+                  {% endif %}
+                </div>
                 
             </div>
             
@@ -136,7 +154,7 @@
       </div>
       </div>
       {% endfor %}   
-      <div class="no-items-msg d-none text-center">No items to show :(</div>  
+      <div class="no-items-msg d-none text-center fw-bold h-50">No items to show :(</div>  
     </div>
   </div>
 {% endblock %}

@@ -1,20 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;1,600;1,800&display=swap');
  
 body {
-    font-family:  Roboto,sans-serif;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
+    /* font-family:serif; */
+    font-size: 18px;
     backdrop-filter: blur(3px);
     background-color: #f8f8ff;
+    
 }
+
+
 .navbar{
   background-color:#0a4d68 !important;
+  border-radius: 3px;
+    box-shadow: 0 7px 6px rgba(10, 75, 108, 0.15);
   
+}
+.navbar-brand{
+  font-size: xx-large;
 }
 .nav-link{
   color:#f5f5f5 !important;
+  font-size:larger
 }
 .logo{
-  width:50px;
-  height:50px
+  width:15%;
+  height:15%;
+  /* border-radius: 100%; */
 }
 .cardbox {
  
@@ -30,7 +43,7 @@ body {
     padding: 2px;
 }
 
-.button {
+.learn-more-btn,.export {
     background: none;
     border: none;
     padding: 6px;
@@ -40,12 +53,36 @@ body {
     backdrop-filter: blur(5px);
     margin-right: 10px;
     border-radius: 5px;
+    height: fit-content;
 
+}
+.learn-more-btn:hover,.export:hover{
+  color:#1d3a21;
+  background: none;
+  font-weight: bold;
+  /* font-weight: 400; */
+}
+.card-front .register-btn:hover{
+  background:#2a6b8f;
+  font-weight:700;
+  color:white;
+}
+.card-front .register-btn{
+  background: white;
+  color: #2a6b8f;
+  font-weight:700;
+  border:1px solid #094157
 }
 .edit,.delete-btn{
     background: none;
     color:red;
+    font-weight: bold;
     border:1px solid red
+}
+.edit:hover,.delete-btn:hover{
+  border: 1px solid white !important;
+  background-color: white !important;
+  color:rgb(122, 4, 4)
 }
 .event-poster{
     width:40%;

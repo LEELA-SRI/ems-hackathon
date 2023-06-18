@@ -10,16 +10,19 @@
       [x]keep a eye on duplicate registrations
       [x]send excel to {someone} after registrations close
        
-[]UI 
+[x]UI 
 [x]categories bug
 [x]login redirect
 [x]exception handlers
 [x]registration deadline,event date
 [x]validators
 [x]team and individual filter
-[]multi line description handler
+[x]multi line description handler
 [x]datebug
 [x]type display in events,categories,modify,addevent
-[]login,logout
+[x]login,logout
+[]team reg
 []optimize
 [x]admin login
+[x]flash arrangement
+[x]password

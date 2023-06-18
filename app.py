@@ -6,23 +6,24 @@ from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 from PIL import Image
 from pytesseract import pytesseract
-import re
+
 import os
-from datetime import datetime,date
-import datefinder
+from datetime import datetime, date
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SubmitField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, NumberRange, Optional
-from email.message import EmailMessage
-import smtplib,ssl
+from helper import allowed_file,convert,send_email_notification,image_to_text,date_validator
+
+from dotenv import load_dotenv
 
 app = Flask(__name__)
+load_dotenv()
 
 
-
-app.config['SECRET_KEY'] = "oohlala"
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY_STR']
 app.config['UPLOAD_FOLDER'] = 'static/images/uploaded'
-uri = f"mongodb+srv://trailUsername:trialPassword@trailcluster.dhfoi.mongodb.net/test"
+uri = os.environ['DB_CONNECT']
 
 
 client = pymongo.MongoClient(uri)
@@ -40,102 +41,53 @@ registrations_db = db.registrations
 class IndividualRegistrationForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    reg_number = StringField('Registration Number', validators=[DataRequired()])
+    reg_number = StringField('Registration Number',
+                             validators=[DataRequired()])
     mobile_number = StringField('Mobile Number', validators=[DataRequired()])
-    branch = SelectField('Branch', choices=[('CSE', 'CSE'), ('IT', 'IT'), ('EEE', 'EEE'),('ECE','ECE'),('Mechanical','Mechanical'),('Mechatronics','Mechatronics'),('Bio Informatics','Bio Informatics')], validators=[DataRequired()])
+    branch = SelectField('Branch', choices=[('CSE', 'CSE'), ('IT', 'IT'), ('EEE', 'EEE'), ('ECE', 'ECE'), ('Mechanical', 'Mechanical'), (
+        'Mechatronics', 'Mechatronics'), ('Bio Informatics', 'Bio Informatics')], validators=[DataRequired()])
     section = StringField('Section', validators=[DataRequired()])
-    year = SelectField('Year', choices=[('1', '1st Year'), ('2', '2nd Year'),('3', '3rd Year'),('4', '4th Year')], validators=[DataRequired()])
+    year = SelectField('Year', choices=[('1', '1st Year'), ('2', '2nd Year'), (
+        '3', '3rd Year'), ('4', '4th Year')], validators=[DataRequired()])
     submit = SubmitField('Register')
-
-
-
-
-ALLOWED_EXTS = set(['png', 'jpg', 'jpeg', 'webp'])
-
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTS
-
-
-def convert(string):
-
-    if string[-2:] == "AM" and string[:2] == "12":
-        return "00" + string[2:-2]
-
-    elif string[-2:] == "AM":
-        return string[:-2]
-
-    elif string[-2:] == "PM" and string[:2] == "12":
-        return string[:-2]
-
-    else:
-        return str((string[:2]) + '12') + string[2:8]
-
-
-def image_to_text(path_im):
-    path_to_tesseract = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
-    image_path = path_im
-    pytesseract.tesseract_cmd = path_to_tesseract
-    img = Image.open(image_path)
-    text = pytesseract.image_to_string(img)
-    ocr_text = text
-
-    venue_pattern = r'\b(?:[A-Z][a-z]*\s)*[A-Z][a-z]*\s(?:[A-Z][a-z]*\s)*\b(?:Auditorium|Classroom|Hotel|Floor|Venue)\b'
-    venues = re.findall(venue_pattern, ocr_text)
-    if len(venues) > 0:
-        venues = venues[0]
-    else:
-        venues = ''
-
-    matches = datefinder.find_dates(ocr_text)
-    ns = []
-    for match in matches:
-        s = str(match.date())
-        if s[8:] in ocr_text:
-            ns.append(s)
-    if len(ns) > 0:
-        dates = ns[-1]
-    else:
-        dates = ''
-
-    time_pattern = r'\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b'
-    times = re.findall(time_pattern, ocr_text)
-    if len(times) > 0:
-        # for i in times:
-        times = convert(times[0]).rstrip()
-        # print(times)
-    else:
-        times = ''
-
-    return venues, dates, times
 
 
 
 @app.route('/home', methods=['GET'])
 def events():
-    is_admin = session['is_admin'] 
+    print(session.items())
+    if 'is_admin' in session:
+        is_admin = session['is_admin']
+    else:
+        is_admin = False
     today_date = str(date.today())
     event = events_db.find()
-    return render_template('events.html', event=event, today_date=today_date,is_admin=is_admin)
+    return render_template('events.html', event=event, today_date=today_date, is_admin=is_admin)
 
-admin_username = "admin"
-admin_password = "admin123" 
+
+admin_username = os.environ['ADMIN_USERNAME']
+admin_password = os.environ['ADMIN_PASS']
 admin_hashpass = sha256(str(admin_password).encode()).hexdigest()
 
-@app.route('/', methods=['GET',"POST"])
-@app.route('/login',methods=["GET","POST"])
+@app.errorhandler(Exception)
+def handle_error(error):
+    return render_template('errorhandler.html'), 500
+
+
+@app.route('/', methods=['GET', "POST"])
+@app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
-        print(username, password)
+        # print(username, password)
         hashed_password = sha256(str(password).encode()).hexdigest()
 
         user = users_db.find_one(
-            {'username' : username}
-        ) 
-        print(user)
-        
+            {'username': username}
+        )
+        # print(user)
+
         if username == admin_username:
             if hashed_password == admin_hashpass:
                 session['is_admin'] = True
@@ -146,6 +98,7 @@ def login():
         else:
             if hashed_password == user['password']:
                 session['is_admin'] = False
+                session['username'] = username
                 flash("Logged in Successfully")
                 return redirect(url_for('events'))
             else:
@@ -165,7 +118,8 @@ def register():
         if user == None:
             if password == cpassword:
                 hashpass = sha256(str(password).encode()).hexdigest()
-                users_db.insert_one({'username': username, 'password': hashpass})
+                users_db.insert_one(
+                    {'username': username, 'password': hashpass})
                 # session['is_admin'] = False
                 return redirect('/login')
             else:
@@ -173,16 +127,17 @@ def register():
         else:
             flash('Username already exists.Kindly Login')
             return redirect('/login')
-    return render_template('userregister.html')       
+    return render_template('userregister.html')
 
 
-# @app.route("/logout", methods=["POST", "GET"])
-# def logout():
-#     if "username" in session:
-#         session.pop("username", None)
-#         return redirect('/home')
-#     else:
-#         return redirect('/home')
+@app.route("/logout", methods=["POST", "GET"])
+def logout():
+    if "is_admin" in session:
+        session.pop("is_admin", None)
+        flash("please Dont go,come back :(")
+        return redirect('/home')
+    else:
+        return redirect('/home')
 
 
 @app.route("/addevent", methods=["POST", "GET"])
@@ -230,12 +185,12 @@ def upload():
     event_limit = request.form.get('event_limit')
     dept = request.form.get('dept')
     event_type = request.form.get('type')
-    print(dept)
+    # print(dept)
     event_cord = request.form.get('event_cord')
     broc = brochures_db.find().sort('_id', pymongo.DESCENDING).limit(1)
     for i in broc:
         file_path = i['uploaded_brochure']
-    if date_validator(event_date,event_deadline) == False:
+    if date_validator(event_date, event_deadline) == False:
         flash("Registration Deadline should be on or before the event date")
         return render_template('addevent.html')
 
@@ -254,7 +209,8 @@ def upload():
                 'rlimit': event_limit,
                 'dept': dept,
                 'contact': event_cord,
-                'type':event_type
+                'type': event_type,
+                'reg_count': 0
 
 
             }
@@ -269,16 +225,6 @@ def edit_event(id):
     event = events_db.find_one({"_id": ObjectId(id)})
     return render_template('modify.html', id=id, event=event)
 
-def date_validator(date1,date2):
-    try:
-        dt1 = datetime.strptime(date1, "%Y-%m-%d")
-        dt2 = datetime.strptime(date2, "%Y-%m-%d")
-        if dt1 >= dt2:
-            return True
-        else:
-            return False
-    except ValueError:
-        return False
 
 @app.route('/update_event/<id>', methods=['GET', 'POST'])
 def update_event(id):
@@ -295,34 +241,34 @@ def update_event(id):
     dept = request.form.get('dept')
     event_cord = request.form.get('event_cord')
     event_type = request.form.get('type')
-    if date_validator(event_date,event_deadline) == False:
+    if date_validator(event_date, event_deadline) == False:
         flash("Registration Deadline should be on or before the event date")
         return render_template('modify.html', id=id, event=event)
     else:
         events_db.update_one({"_id": ObjectId(id)},
-                                    {"$set": {
-                                        'name': event_name,
-                                        'venue': event_venue,
-                                        'date': event_date,
-                                        'time': event_time,
-                                        'awards': event_awards,
-                                        'eligibility': event_eligibility,
-                                        'desc': event_desc,
-                                        'deadline': event_deadline,
-                                        'rlimit': event_limit,
-                                        'dept': dept,
-                                        'contact': event_cord,
-                                        'type':event_type
-                                    }}
-                                    )
-        print(events_db.find_one({"_id": ObjectId(id)}))
+                             {"$set": {
+                                 'name': event_name,
+                                 'venue': event_venue,
+                                 'date': event_date,
+                                 'time': event_time,
+                                 'awards': event_awards,
+                                 'eligibility': event_eligibility,
+                                 'desc': event_desc,
+                                 'deadline': event_deadline,
+                                 'rlimit': event_limit,
+                                 'dept': dept,
+                                 'contact': event_cord,
+                                 'type': event_type
+                             }}
+                             )
+        # print(events_db.find_one({"_id": ObjectId(id)}))
         flash('Event updated successfully!')
         return redirect('/home')
 
 
 @app.route('/delete/<id>', methods=['GET', 'POST'])
 def delete(id):
-    print(id)
+    # print(id)
     events_db.delete_one({"_id": ObjectId(id)})
     flash('Event Deleted successfully!')
     return redirect('/home')
@@ -332,80 +278,72 @@ def delete(id):
 def export(id):
     records = registrations_db.find({"event_id": id})
     event = events_db.find_one({"_id": ObjectId(id)})
-    print(records,'-----------------------------')
+    # print(records, '-----------------------------')
     if registrations_db.count_documents({"event_id": id}) == 0:
         flash("No records found for the event.")
         return redirect('/home')
     csv_file = f"{event['name']}.csv"
-    with open(csv_file,'w',newline="") as reg_file:
-        writer_obj = csv.DictWriter(reg_file,fieldnames = records[0].keys())
+    with open(csv_file, 'w', newline="") as reg_file:
+        writer_obj = csv.DictWriter(reg_file, fieldnames=records[0].keys())
         writer_obj.writeheader()
         writer_obj.writerows(records)
-    return send_file(csv_file,as_attachment=True)
+    return send_file(csv_file, as_attachment=True)
 
-def send_email_notification(data,event):
-    
-    receiver_email = data['email']
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    em = EmailMessage()
-    em['From'] = sender_email
-    em['To'] =  data['email']
-    em["subject"] = "Registration success"
-    message=f"Hey {data['name']},\n\nYou have successfully registered for {data['event_name']}.Make sure to be there on {event['date']}\n at {event['venue']}\n\nBest of luck!\nFor further queries contact {event['contact']}."
-    em.set_content(message)
 
-    context = ssl.create_default_context()
-
-    with smtplib.SMTP_SSL('smtp.gmail.com',465,context=context) as smtp:
-        smtp.login(sender_email,password)
-        smtp.sendmail(sender_email,receiver_email,em.as_string())
-        
 @app.route('/register/<id>', methods=['GET', 'POST'])
 def event_register(id):
-    event = events_db.find_one({"_id": ObjectId(id)}) 
-    form = IndividualRegistrationForm()
-    registration_count = registrations_db.count_documents({'event_id': id})
-    print(registration_count,'brrrrrrrrrrrr')
-    registration_limit = int(event['rlimit'])
-    print(registration_limit,'hhhhhhhhhhhhh',type(registration_limit),type(registration_count))
+    if 'is_admin' in session and session['is_admin'] == False:
+        username = session['username']
+        event = events_db.find_one({"_id": ObjectId(id)})
+        form = IndividualRegistrationForm()
+        registration_count = registrations_db.count_documents({'event_id': id})
+        events_db.update_one({"_id": ObjectId(id)},
+                             {"$set": {"reg_count": registration_count}})
+        # print(registration_count, 'brrrrrrrrrrrr')
 
-    if registration_count >= registration_limit:
+        registration_limit = int(event['rlimit'])
+
+        # print(registration_limit, 'hhhhhhhhhhhhh', type(
+            # registration_limit), type(registration_count))
+
+        if registration_count >= registration_limit:
             flash('Registration limit has been reached for this event.')
             return redirect('/home')
 
-    elif form.validate_on_submit():
-        reg_num = form.reg_number.data
-        email = form.email.data
+        elif form.validate_on_submit():
+            reg_num = form.reg_number.data
+            email = form.email.data
 
-        existing_registration = registrations_db.find_one({
-            'event_id': id,
-            "$or": [{'email':email},{'reg_num' :reg_num}],
-            
+            existing_registration = registrations_db.find_one({
+                'event_id': id,
+                "$or": [{'email': email}, {'reg_num': reg_num}],
+
             })
-        print(existing_registration)
-        if existing_registration:
-            flash('You have already registered for this event.')
+            # print(existing_registration)
+            if existing_registration:
+                flash('You have already registered for this event.')
+                return redirect('/home')
+
+            registration_data = {
+                'name': form.name.data,
+                'email': email,
+                'reg_num': reg_num,
+                'mobile_num': form.mobile_number.data,
+                'branch': form.branch.data,
+                'section': form.section.data,
+                'year': form.year.data,
+                'event_id': id,
+                "event_name": event['name']
+            }
+            # print(registration_data)
+            registrations_db.insert_one(registration_data)
+            send_email_notification(registration_data, event)
+            flash('Registration successful.Confirmation Mail sent :)')
             return redirect('/home')
-
-        registration_data = {
-            'name': form.name.data,
-            'email': email,
-            'reg_num': reg_num,
-            'mobile_num': form.mobile_number.data,
-            'branch': form.branch.data,
-            'section': form.section.data,
-            'year': form.year.data,
-            'event_id':id,
-            "event_name":event['name']
-        }
-        print(registration_data)
-        registrations_db.insert_one(registration_data)
-        send_email_notification(registration_data,event)
-        flash('Registration successful.Confirmation Mail sent :)')
-        return redirect('/home')
-    return render_template('indreg.html',form=form,event=event,registration_count=registration_count)
-
+        return render_template('indreg.html', form=form, event=event, registration_count=registration_count, username=username)
+    elif 'is_admin' not in session:
+        flash('Login to register :)')
+        return redirect('\login')
 
 
 @app.route('/categories')
@@ -427,7 +365,7 @@ def categories():
             filters['date'] = {'$regex': f'{month}-'}
     if event_type:
         filters['type'] = event_type
-    print(f"FLTER: {filters}")
+    # print(f"FLTER: {filters}")
     filtered_events = list(events_db.find(filters))
 
     return render_template('categories.html', filtered_events=filtered_events)
@@ -437,19 +375,9 @@ if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0")
 
 
-
-
-
-
-
-
-
-
-
-
 # class TeamMemberForm(FlaskForm):
 #     reg_number = StringField('Registration Number')
-    
+
 
 # class TeamRegistrationForm(FlaskForm):
 #     team_lead_name = StringField('Team Leader Name', validators=[DataRequired()])
@@ -469,7 +397,7 @@ if __name__ == '__main__':
 #     event_size = 4
 #     print(event)
 #     event_type = event['type']
-    
+
 #     if event_type == 'individual':
 #         form = IndividualRegistrationForm()
 #         if form.validate_on_submit():
