@@ -1,19 +1,26 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% block content %}
 
 <form action="{{ url_for('login')}}" method="post">
-        <div class="form-group mb-3">
-        <label for="username" class="mb-2">Username :</label>
-        <input type="text" class="form-control" id="username" name="username" placeholder="Please enter your Username"></div>
-        <div class="form-group mb-3">
-        <label for="password" class="mb-2">Password:</label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password"></div>
-        <button class="btn btn-primary user-login mt-2" type="submit">Login</button>
+  <div class="form-group mb-3">
+    <label for="username" class="mb-2">Username :</label>
+    <input type="text" class="form-control" id="username" name="username" placeholder="Please enter your Username">
+  </div>
+  <div class="form-group mb-3">
+    <label for="password" class="mb-2">Password:</label>
+    <input type="password" class="form-control passwordField" id="password" name="password" placeholder="Enter your password">
+  </div>
+  <div class="form-group mb-3">
+    <input type="checkbox" id="showPasswordCheckbox">
+    <label for="showPasswordCheckbox">Show Password</label>
+  </div>
 
-  </form>
-  <div class="dropdown mt-3"></div>
-  <a class="item" href="{{  url_for('register')  }}">New around here? Sign up</a>
-  <!-- <a class="dropdown-item" href="#">Forgot password?</a> -->
+  <button class="btn btn-primary user-login mt-2" type="submit">Login</button>
+
+</form>
+<div class="dropdown mb-3"></div>
+<a class="item" href="{{  url_for('register')  }}">New around here? Sign up</a>
+<!-- <a class="dropdown-item" href="#">Forgot password?</a> -->
 </div>
- 
+
 {% endblock %}

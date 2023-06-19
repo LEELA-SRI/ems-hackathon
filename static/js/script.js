@@ -44,36 +44,43 @@ var cards = document.querySelectorAll(".card");
 });
 
 
-
+if (show_past_btn){
 show_past_btn.addEventListener("click", function () {
   toggleFilterButton(show_past_btn);
   showCards(show_past);
   hideCards(show_ongoing);
   hideCards(show_upcoming);
   toggleNoItemsMessage(no_items_msg);
-});
+})
+};
 
+if (show_ongoing_btn){
 show_ongoing_btn.addEventListener("click", function () {
   toggleFilterButton(show_ongoing_btn);
   showCards(show_ongoing);
   hideCards(show_past);
   hideCards(show_upcoming);
   toggleNoItemsMessage(no_items_msg);
-});
+})
+};
 
+if(show_upcoming_btn){
 show_upcoming_btn.addEventListener("click", function () {
   toggleFilterButton(show_upcoming_btn);
   showCards(show_upcoming);
   hideCards(show_past);
   hideCards(show_ongoing);
   toggleNoItemsMessage(no_items_msg);
-});
+})
+};
 
+if(show_all_btn){
 show_all_btn.addEventListener("click", function () {
   toggleFilterButton(show_all_btn);
   showCards(show_all);
   toggleNoItemsMessage(no_items_msg);
-});
+})
+};
 
 function toggleFilterButton(clickedButton) {
   [show_all_btn, show_past_btn, show_ongoing_btn, show_upcoming_btn].forEach((button) => {
@@ -97,6 +104,7 @@ function hideCards(cards) {
   });
 }
 
+if(no_items_msg){
 function toggleNoItemsMessage() {
   let visibleCards = document.querySelectorAll(".item:not(.d-none)");
   if (visibleCards.length === 0) {
@@ -105,5 +113,19 @@ function toggleNoItemsMessage() {
     no_items_msg.classList.add("d-none");
   }
 }
-
 toggleNoItemsMessage();
+};
+
+
+
+let showPasswordCheckbox = document.getElementById("showPasswordCheckbox");
+let passwordFields = document.querySelectorAll(".passwordField");
+if(showPasswordCheckbox){
+showPasswordCheckbox.addEventListener("change", function () {
+  let visibility = showPasswordCheckbox.checked ? "text" : "password";
+  passwordFields.forEach(function (passwordField) {
+    passwordField.type = visibility;
+  });
+})
+};
+

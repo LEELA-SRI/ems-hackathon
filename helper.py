@@ -1,7 +1,7 @@
 import os,re,smtplib,ssl,datefinder,pytesseract
 from PIL import Image
 from email.message import EmailMessage
-from datetime import datetime,date
+from datetime import datetime
 
 ALLOWED_EXTS = set(['png', 'jpg', 'jpeg', 'webp'])
 
@@ -25,42 +25,6 @@ def convert(string):
         return str((string[:2]) + '12') + string[2:8]
 
 
-def image_to_text(path_im):
-    path_to_tesseract = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
-    image_path = path_im
-    pytesseract.tesseract_cmd = path_to_tesseract
-    img = Image.open(image_path)
-    text = pytesseract.image_to_string(img)
-    ocr_text = text
-
-    venue_pattern = r'\b(?:[A-Z][a-z]*\s)*[A-Z][a-z]*\s(?:[A-Z][a-z]*\s)*\b(?:Auditorium|Classroom|Hotel|Floor|Venue)\b'
-    venues = re.findall(venue_pattern, ocr_text)
-    if len(venues) > 0:
-        venues = venues[0]
-    else:
-        venues = ''
-
-    matches = datefinder.find_dates(ocr_text)
-    ns = []
-    for match in matches:
-        s = str(match.date())
-        if s[8:] in ocr_text:
-            ns.append(s)
-    if len(ns) > 0:
-        dates = ns[-1]
-    else:
-        dates = ''
-
-    time_pattern = r'\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b'
-    times = re.findall(time_pattern, ocr_text)
-    if len(times) > 0:
-        # for i in times:
-        times = convert(times[0]).rstrip()
-        # print(times)
-    else:
-        times = ''
-
-    return venues, dates, times
 
 
 def send_email_notification(data, event):

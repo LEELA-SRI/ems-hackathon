@@ -1,15 +1,20 @@
 {% extends 'base.html' %} 
 {% block content %}
+<h2 class="mb-4">Register</h2>
 <form action="{{ url_for('register')}}" method="post">
     <div class="form-group mb-3 ">
     <label for="Username">Username:</label>
     <input type="text" class="form-control" id="username" name="username" placeholder="username"></div>
     <div class="form-group mb-3 ">
     <label for="password">Password:</label>
-    <input type="password" class="form-control" id="password" name="password" placeholder="password"></div>
+    <input type="password" class="form-control passwordField" id="password" name="password" placeholder="password"></div>
     <div class="form-group mb-3 ">
     <label for="cpassword">Confirm password:</label>
-    <input type="password" class="form-control" id="cpassword" name="cpassword" placeholder="Re-enter password"></div>
+    <input type="password" class="form-control passwordField" id="cpassword" name="cpassword" placeholder="Re-enter password"></div>
+    <div class="form-group mb-3">
+        <input type="checkbox" id="showPasswordCheckbox">
+        <label for="showPasswordCheckbox">Show Password</label>
+      </div>
     <button class="btn btn-primary" type="submit">Register</button>
 
 </form>

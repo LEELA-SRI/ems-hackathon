@@ -6,14 +6,15 @@ from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 from PIL import Image
 from pytesseract import pytesseract
-
+import datefinder
 import os
+import re
 from datetime import datetime, date
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SubmitField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, NumberRange, Optional
-from helper import allowed_file,convert,send_email_notification,image_to_text,date_validator
+from helper import allowed_file, convert, send_email_notification, date_validator
 
 from dotenv import load_dotenv
 
@@ -38,6 +39,46 @@ brochures_db = db.brochures
 registrations_db = db.registrations
 
 
+def image_to_text(path_im):
+    path_to_tesseract = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
+    image_path = path_im
+    pytesseract.tesseract_cmd = path_to_tesseract
+    img = Image.open(image_path)
+    text = pytesseract.image_to_string(img)
+    ocr_text = text
+
+    venue_pattern = r'\b(?:[A-Z][a-z]*\s)*[A-Z][a-z]*\s(?:[A-Z][a-z]*\s)*\b(?:Auditorium|Classroom|Hotel|Floor|Venue)\b'
+    venues = re.findall(venue_pattern, ocr_text)
+    if len(venues) > 0:
+        venues = venues[0]
+    else:
+        venues = ''
+
+    matches = datefinder.find_dates(ocr_text)
+    ns = []
+    for match in matches:
+        s = str(match.date())
+        if s[8:] in ocr_text:
+            ns.append(s)
+    if len(ns) > 0:
+        dates = ns[-1]
+    else:
+        dates = ''
+
+    time_pattern = r'\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\b'
+    times = re.findall(time_pattern, ocr_text)
+    if len(times) > 0:
+        # for i in times:
+        times = convert(times[0]).rstrip()
+        # print(times)
+    else:
+        times = datetime.strptime('10:00 am', '%I:%M %p').time()
+        times = times.strftime("%I:%M")
+        print(times)
+
+    return venues, dates, times
+
+
 class IndividualRegistrationForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -50,7 +91,6 @@ class IndividualRegistrationForm(FlaskForm):
     year = SelectField('Year', choices=[('1', '1st Year'), ('2', '2nd Year'), (
         '3', '3rd Year'), ('4', '4th Year')], validators=[DataRequired()])
     submit = SubmitField('Register')
-
 
 
 @app.route('/home', methods=['GET'])
@@ -69,9 +109,9 @@ admin_username = os.environ['ADMIN_USERNAME']
 admin_password = os.environ['ADMIN_PASS']
 admin_hashpass = sha256(str(admin_password).encode()).hexdigest()
 
-@app.errorhandler(Exception)
-def handle_error(error):
-    return render_template('errorhandler.html'), 500
+# @app.errorhandler(Exception)
+# def handle_error(error):
+#     return render_template('errorhandler.html'), 500
 
 
 @app.route('/', methods=['GET', "POST"])
@@ -96,13 +136,18 @@ def login():
             else:
                 flash("Incorrect Password")
         else:
-            if hashed_password == user['password']:
-                session['is_admin'] = False
-                session['username'] = username
-                flash("Logged in Successfully")
-                return redirect(url_for('events'))
+            if user:
+                if hashed_password == user['password']:
+                    session['is_admin'] = False
+                    session['username'] = username
+                    flash("Logged in Successfully")
+                    return redirect(url_for('events'))
+                else:
+                    flash("Incorrect Password")
             else:
-                flash("Incorrect Password")
+                flash("User doesnt exist")
+                return redirect('/register')
+
     return render_template('userlogin.html')
 
 
@@ -121,6 +166,7 @@ def register():
                 users_db.insert_one(
                     {'username': username, 'password': hashpass})
                 # session['is_admin'] = False
+                flash("Registration successful. Go ahead and login")
                 return redirect('/login')
             else:
                 flash('passwords donot match')
@@ -132,8 +178,14 @@ def register():
 
 @app.route("/logout", methods=["POST", "GET"])
 def logout():
-    if "is_admin" in session:
+    if session['is_admin'] == True:
         session.pop("is_admin", None)
+        flash("You are now logged out")
+        return redirect('/home')
+    elif session['is_admin'] == False and session['username']:
+        session.pop("username", None)
+        session.pop("is_admin", None)
+
         flash("please Dont go,come back :(")
         return redirect('/home')
     else:
@@ -142,6 +194,7 @@ def logout():
 
 @app.route("/addevent", methods=["POST", "GET"])
 def addevent():
+    print(session, '===================')
     if session['is_admin'] == True:
 
         if request.method == 'POST':
@@ -304,7 +357,7 @@ def event_register(id):
         registration_limit = int(event['rlimit'])
 
         # print(registration_limit, 'hhhhhhhhhhhhh', type(
-            # registration_limit), type(registration_count))
+        # registration_limit), type(registration_count))
 
         if registration_count >= registration_limit:
             flash('Registration limit has been reached for this event.')
