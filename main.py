@@ -110,9 +110,9 @@ admin_username = os.environ['ADMIN_USERNAME']
 admin_password = os.environ['ADMIN_PASS']
 admin_hashpass = sha256(str(admin_password).encode()).hexdigest()
 
-@app.errorhandler(Exception)
-def handle_error(error):
-    return render_template('errorhandler.html'), 500
+# @app.errorhandler(Exception)
+# def handle_error(error):
+#     return render_template('errorhandler.html'), 500
 
 
 @app.route('/', methods=['GET', "POST"])
