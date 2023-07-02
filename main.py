@@ -25,6 +25,7 @@ load_dotenv()
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY_STR']
 app.config['UPLOAD_FOLDER'] = 'static/images/uploaded'
 uri = os.environ['DB_CONNECT']
+port=os.getenv('PORT')
 
 
 client = pymongo.MongoClient(uri)
@@ -425,7 +426,7 @@ def categories():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0:$PORT")
+    app.run(debug=True, host="0.0.0.0",port=port)
 
 
 # class TeamMemberForm(FlaskForm):
