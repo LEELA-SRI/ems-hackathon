@@ -103,14 +103,16 @@
                                 </div>
                                 <div>
                                     <i class="fa-solid fa-location"></i>
-                                    {{ i['venue'] }}
+                                    {{ i['venue'] }} 
                                 </div>
                             </div>
                             <br>
+                           
                             <div class="d-flex gap-2">
                                 {% if is_admin == True %}
-                                <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
-                                <a href="{{ url_for('export',id=i['_id'])}}" class="btn export">Export CSV</a>
+                                <!-- <a href="{{ url_for('edit_event',id=i['_id'])}}"  class="btn btn-primary edit">Edit</a>
+                                <a href="{{ url_for('export',id=i['_id'])}}" class="btn export">Export CSV</a> -->
+                                <button class="btn learn-more-btn">Learn More</button>
                                 {% else %}
                                 
                                 <div class="form-group mb-3">
@@ -119,8 +121,10 @@
                                     <button class="btn btn-secondary" style="pointer-events: none;" type="button" disabled>Register</button>
                                   </span>
                                   {% else %}
-                                  <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-primary register-btn" >Register</a>
                                   
+                                  
+                                  <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-primary register-btn" >Register</a>
+                                 
                                   {% endif %}
                                 </div>
                                 <button class="btn learn-more-btn">Learn More</button>
@@ -170,6 +174,10 @@
                                 {{ i['rlimit']}}
                             </p>
                             {% endif %}
+                            <p class="event-count">
+                                <strong>Registrations:</strong>
+                                {{ i['reg_count']}}
+                            </p>
                             {% if i['contact']%}
                             <p class="event-cord">
                                 <strong>For further queries, contact:</strong><br>
@@ -184,8 +192,13 @@
                         Registration closed
                       </button>
                     {% else %}
+                    {% if is_admin == True %}
+                    <button class="btn btn-primary" disabled data-toggle="tooltip" data-placement="top" title="Registrations open">
+                        Registrations open
+                      </button>
+                      {% else %}
                     <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-info register-btn" style="color: white;">Register</a>
-                      
+                      {% endif %}
                     {% endif %}
                   </div>
 

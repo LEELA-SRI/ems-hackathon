@@ -2,9 +2,9 @@
 {% block content %}
 <!-- Individual Registration Form -->
 <form action="{{ url_for('event_register', id=event['_id']) }}" method="POST" class="container">
-    <h3 class="mb-4">Registration Form</h3>
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+          <h3 class="mb-4">Registration Form</h3>
             {{ form.hidden_tag() }}
             <div class="mb-3">
               {{ form.name.label(class="form-label") }} {{ form.name(class="form-control") }}

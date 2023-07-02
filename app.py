@@ -109,9 +109,9 @@ admin_username = os.environ['ADMIN_USERNAME']
 admin_password = os.environ['ADMIN_PASS']
 admin_hashpass = sha256(str(admin_password).encode()).hexdigest()
 
-# @app.errorhandler(Exception)
-# def handle_error(error):
-#     return render_template('errorhandler.html'), 500
+@app.errorhandler(Exception)
+def handle_error(error):
+    return render_template('errorhandler.html'), 500
 
 
 @app.route('/', methods=['GET', "POST"])
@@ -346,6 +346,7 @@ def export(id):
 @app.route('/register/<id>', methods=['GET', 'POST'])
 def event_register(id):
     if 'is_admin' in session and session['is_admin'] == False:
+
         username = session['username']
         event = events_db.find_one({"_id": ObjectId(id)})
         form = IndividualRegistrationForm()
@@ -359,24 +360,19 @@ def event_register(id):
         # print(registration_limit, 'hhhhhhhhhhhhh', type(
         # registration_limit), type(registration_count))
 
+        existing_registration = registrations_db.find_one({
+                'reg_num': username,
+                'event_id': id
+                })
         if registration_count >= registration_limit:
             flash('Registration limit has been reached for this event.')
             return redirect('/home')
-
-        elif form.validate_on_submit():
+        if existing_registration:
+            flash('You have already registered for this event.')
+            return redirect('/home')
+        if form.validate_on_submit():
             reg_num = form.reg_number.data
             email = form.email.data
-
-            existing_registration = registrations_db.find_one({
-                'event_id': id,
-                "$or": [{'email': email}, {'reg_num': reg_num}],
-
-            })
-            # print(existing_registration)
-            if existing_registration:
-                flash('You have already registered for this event.')
-                return redirect('/home')
-
             registration_data = {
                 'name': form.name.data,
                 'email': email,
@@ -389,11 +385,11 @@ def event_register(id):
                 "event_name": event['name']
             }
             # print(registration_data)
-            registrations_db.insert_one(registration_data)
             send_email_notification(registration_data, event)
-            flash('Registration successful.Confirmation Mail sent :)')
+            registrations_db.insert_one(registration_data)
+            
             return redirect('/home')
-        return render_template('indreg.html', form=form, event=event, registration_count=registration_count, username=username)
+        return render_template('indreg.html', form=form, event=event, username=username)
     elif 'is_admin' not in session:
         flash('Login to register :)')
         return redirect('\login')
@@ -401,6 +397,10 @@ def event_register(id):
 
 @app.route('/categories')
 def categories():
+    if 'is_admin' in session:
+        is_admin = session['is_admin']
+    else:
+        is_admin = False
     print(request.args)
     department = request.args.get('department')
     event_name = request.args.get('name')
@@ -421,7 +421,7 @@ def categories():
     # print(f"FLTER: {filters}")
     filtered_events = list(events_db.find(filters))
 
-    return render_template('categories.html', filtered_events=filtered_events)
+    return render_template('categories.html', filtered_events=filtered_events,is_admin=is_admin)
 
 
 if __name__ == '__main__':

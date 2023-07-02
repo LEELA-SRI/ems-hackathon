@@ -1,0 +1,10 @@
+flask
+pymongo
+Pillow
+pytesseract
+datefinder
+Flask-WTF
+WTForms
+python-dotenv
+email_validator
+verify_email

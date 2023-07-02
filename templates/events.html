@@ -14,7 +14,7 @@
 
   <section class=portfolio id=Events>
     <div class=container>
-      <ul class="d-flex justify-content-center" id=portfolio-flters>
+      <ul class="d-flex flex-column flex-sm-row justify-content-center" id=portfolio-flters>
         <li class="filter-all-btn filter-active" >All
         <li class="filter-past-btn">Past Events
         <li class="filter-ongoing-btn">Ongoing Events
@@ -71,6 +71,7 @@
                           <button class="btn btn-secondary" style="pointer-events: none;" type="button" disabled>Register</button>
                         </span>
                         {% else %}
+                
                         <a href="{{ url_for('event_register',id=i['_id']) }}" class="btn btn-primary register-btn" >Register</a>
                         
                         {% endif %}
@@ -119,6 +120,10 @@
                     {{ i['deadline']}}
                 </p>
                 {% endif %}
+                <p class="event-count">
+                  <strong>Registrations:</strong>
+                  {{ i['reg_count']}}
+              </p>
                 {% if i['rlimit'] %}
                 <p class="event-limit">
                     <strong>Registration Limit:</strong>
